@@ -60,6 +60,20 @@ Civic problems are commons problems. The pothole affects everyone who uses that 
 
 Commons problems require collective action, but collective action is hard. Komon is infrastructure for making it easier—a protocol for coordinating around shared problems.
 
+## Why "Directions"
+
+We call proposed solutions "directions," not "proposals" or "solutions." This word choice is deliberate.
+
+**A proposal is static.** It sits in a document, waiting for approval. It implies hierarchy—someone proposes, someone else decides.
+
+**A solution claims too much.** It presumes the answer before the problem is solved. Most "solutions" in civic contexts are really hypotheses.
+
+**A direction is dynamic.** It implies movement—steering toward an outcome. It acknowledges uncertainty while asserting intent. You're pointing the way, not claiming to have arrived.
+
+Directions can also coexist. You can have multiple directions for the same problem, each pointing a different way. The market decides which direction has the most support. Reality decides which one works.
+
+The framing matters because it shapes how people think about participation. You're not submitting a proposal to be judged. You're not claiming to have *the* solution. You're offering a direction—and backing it with your stake and your reputation.
+
 ## What We Believe
 
 **Judgment is valuable.** The ability to assess what will actually work—not what sounds good, not what's politically safe, but what will solve the problem—is a skill worth rewarding.
