@@ -362,13 +362,15 @@
       padding-left: 24px;
     }
 
-    /* Controls */
+    /* Controls - hidden, use keyboard */
     .controls {
-      position: fixed;
-      bottom: 20px;
-      left: 30px;
-      display: flex;
-      gap: 12px;
+      display: none;
+    }
+
+    body.notes-open .nav-hint,
+    body.notes-open .slide-number {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .control-btn {
@@ -760,7 +762,7 @@
 
   <!-- Speaker Notes Panel -->
   <div class="notes-panel" id="notesPanel">
-    <h4>Speaker Notes</h4>
+    <h4>Speaker Notes <span style="font-weight: normal; color: #6b7280; font-size: 12px; margin-left: 12px;">Press N to close • Arrow keys still work</span></h4>
     <div id="notesContent"></div>
   </div>
 
@@ -772,7 +774,7 @@
   </div>
 
   <div class="slide-number" id="slideNumber">1 / 12</div>
-  <div class="nav-hint">Use arrow keys or click to navigate • Press N for speaker notes</div>
+  <div class="nav-hint">Arrow keys or click to navigate • N for speaker notes</div>
 
   <script>
     let currentSlide = 0;
@@ -808,6 +810,7 @@
       notesVisible = !notesVisible;
       notesPanel.classList.toggle('visible', notesVisible);
       notesBtn.classList.toggle('active', notesVisible);
+      document.body.classList.toggle('notes-open', notesVisible);
       if (notesVisible) {
         updateNotes();
       }
