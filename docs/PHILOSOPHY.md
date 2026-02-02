@@ -1,64 +1,102 @@
 # The Komon Philosophy
 
+## The Wasted Miracle
+
+Prediction markets are a miracle of collective intelligence.
+
+When you force people to back their beliefs with money, something remarkable happens. They think harder. They seek out information. They update when they're wrong. The aggregated wisdom of the crowd—properly incentivized—outperforms experts, polls, and committees.
+
+This has been proven again and again. Prediction markets called elections more accurately than pollsters. They priced risks better than analysts. They surfaced information that no individual possessed.
+
+**And we've wasted this miracle on entertainment.**
+
+Elections that happen once every few years. Sports outcomes that reset every season. Celebrity gossip. Questions that are interesting but don't change the texture of anyone's daily life.
+
+Meanwhile, the problems that actually affect how you live—the pothole you drive over every morning, the intersection where someone will eventually get hurt, the park your kids can't play in—these problems sit in complaint queues, waiting for bureaucratic processes that optimize for avoiding blame rather than achieving outcomes.
+
+## The Transformation
+
+There's a profound difference between these two questions:
+
+**"Will the city fix potholes this year?"** — Traditional prediction market
+
+**"Which approach will fix THIS pothole?"** — Komon
+
+The first is passive observation. You're betting on what will happen. The outcome doesn't change based on your prediction.
+
+The second is active prescription. You're betting on what *should* happen. And when enough people stake money on a direction, they're creating a signal—evidence of collective judgment about what will work.
+
+This is prediction markets graduating from entertainment to infrastructure.
+
+From "will it happen?" to "what should we do?"
+
+From information to actionable intelligence.
+
+## What Changes
+
+### The Civic Feedback Loop Inverts
+
+The current loop: Citizens complain → Officials decide → Maybe something happens → Citizens complain again
+
+The Komon loop: Citizens propose solutions → Citizens stake on what they believe will work → Signal emerges → Anyone can act on the signal → Outcomes are verified → Correct predictions are rewarded
+
+The signal isn't "we're unhappy." The signal is "here's what we believe will work, and we're backing it with money."
+
+### A New Class of Civic Participant Emerges
+
+Not activists—people driven by causes. Not bureaucrats—people embedded in institutions. Not NIMBYs—people protecting what they have.
+
+*Direction traders.* People who develop genuine expertise in what actually gets problems solved in their neighborhood.
+
+The retired civil engineer who knows exactly why that intersection floods. The shop owner who's watched three different "solutions" fail. The city council staffer who knows which departments have budget. The community organizer who knows which petitions actually get responses.
+
+These people exist. They have valuable knowledge. Currently, that knowledge has no venue where it can be expressed and rewarded.
+
+### Local Knowledge Becomes Valuable
+
+In the current system, local knowledge is worth nothing. The person who's lived on a block for 30 years has the same weight as a consultant who flies in for a day.
+
+In Komon, local knowledge is monetizable. If you know that the city council member for your district actually responds to petitions (unlike the neighboring district), that's tradeable information. If you know that a particular contractor does good work (or doesn't), that's tradeable information.
+
+This creates an incentive to develop and share local knowledge—not just opinions, but knowledge that can be tested against reality.
+
+### Incentives Align Toward Outcomes
+
+The current system rewards activity. Filing a report feels productive. Attending a meeting feels like participation. Publishing a study creates jobs for researchers.
+
+None of this is tied to whether problems get solved.
+
+Komon rewards outcomes. Problem posters want problems solved (that's why they posted). Direction proposers want their directions to win (that's why they proposed). Stakers want their predictions to be correct (that's why they staked). Verifiers want to verify accurately (their reputation depends on it).
+
+Everyone in the system only wins when problems actually get solved.
+
 ## The Problem with Problems
 
-Cities are full of problems. Potholes, broken streetlights, illegal dumping, unsafe intersections. Everyone sees them. Everyone complains about them. But the feedback loop between identifying a problem and solving it is broken.
+Before we can apply this mechanism, we need to understand why civic problems are different from typical prediction market questions.
 
-**Current systems fail in predictable ways:**
+**They're hyperlocal.** There's no Reuters feed for "streetlight on Elm Street." The information needed to assess solutions is held by people who live there.
 
-- **311 apps** collect reports but don't prioritize. A pothole gets the same weight whether it's causing accidents or just annoying.
-- **Town halls** amplify the loudest voices, not the best ideas. The person with time to attend isn't necessarily the person with the best solution.
-- **Government processes** optimize for avoiding blame, not for outcomes. The safest choice is often no choice at all.
+**They're actionable.** Unlike "who will win the election," civic problems have solutions that someone could actually implement. The prediction isn't just about what will happen—it's about what should be done.
 
-The result: problems persist, citizens disengage, and the gap between "someone should fix this" and "this got fixed" grows wider.
+**They're verifiable but subjective.** "Was the pothole fixed?" seems simple, but "fixed well enough?" requires judgment. Success criteria matter.
 
-## A Different Question
+**They're commons problems.** No one person owns them. They affect everyone in an area, which means the benefits of solving them are diffuse—hard to capture.
 
-Most civic platforms ask: **"What's wrong?"**
+This is why 311 apps fail. They collect complaints but don't prioritize. They report problems but don't propose solutions. They treat "pothole downtown" the same as "pothole on a side street"—even when one affects 10,000 people and the other affects 100.
 
-Komon asks: **"What would work?"**
+## The Mechanism
 
-This is a fundamentally different question. Reporting a problem requires observation. Proposing a solution requires judgment. And judgment—the ability to assess what will actually work in the real world—is valuable and rare.
+Komon's mechanism is simple but carefully designed:
 
-## The Insight
+1. **Problems have clear success criteria.** When you post a problem, you define what "solved" means. Not "better"—solved. This creates a verifiable outcome.
 
-Prediction markets have proven remarkably good at aggregating information. When people have skin in the game, they think harder. They research. They update their beliefs when new information arrives. The market price becomes a signal—often more accurate than expert opinion.
+2. **Directions are hypotheses.** When you propose a direction, you're not claiming to have *the* answer. You're offering a hypothesis: "If we do X, the problem will be solved." The market tests that hypothesis.
 
-But prediction markets typically ask: "Will X happen?"
+3. **Stakes create signal.** When people stake money on directions, they're creating information. The aggregate of all stakes is a prediction—the community's collective judgment about what will work.
 
-Komon asks: "Which approach to solving X will work?"
+4. **Outcomes verify hypotheses.** When a problem is resolved, we can see which direction(s) contributed. Correct predictions are rewarded. Incorrect predictions lose stakes.
 
-This shifts the focus from prediction to *prescription*. You're not betting on whether the city will fix the pothole. You're betting on *how* it should be fixed—and putting your money where your judgment is.
-
-## Why This Matters
-
-**1. It surfaces hidden knowledge**
-
-The retired civil engineer who knows exactly why that intersection floods every spring. The shop owner who's watched three different "solutions" fail. The city planner who knows which department actually has budget. These people have valuable knowledge but no venue to share it where it matters.
-
-When proposing a direction means staking real money on its success, people with genuine insight have an incentive to step forward. Those without insight have an incentive to defer.
-
-**2. It creates accountability for ideas**
-
-Anyone can propose a solution in a comment thread. But when you stake money on "organize a community petition" versus "crowdfund private repairs," you're accountable. Your track record follows you. Over time, we can distinguish people with good civic judgment from those who just have opinions.
-
-**3. It aligns incentives toward outcomes**
-
-The current system rewards activity, not outcomes. Filing a report feels productive even if nothing happens. Attending a meeting feels like participation even if decisions were made elsewhere.
-
-Komon rewards outcomes. You only win if your direction actually works. This creates pressure toward solutions that are not just popular but *effective*.
-
-**4. It's permissionless**
-
-You don't need to be elected, appointed, or credentialed. You don't need to know the right people. If you can see a problem and think clearly about solutions, you can participate. The protocol doesn't care who you are—only whether you're right.
-
-## The Name
-
-**Komon** (コモン) comes from "commons"—shared resources that belong to everyone.
-
-Civic problems are commons problems. The pothole affects everyone who uses that road. The broken streetlight affects everyone who walks that block at night. The polluted park affects every family in the neighborhood.
-
-Commons problems require collective action, but collective action is hard. Komon is infrastructure for making it easier—a protocol for coordinating around shared problems.
+5. **Reputation compounds.** Your track record follows you. Over time, we can distinguish people with good civic judgment from people who just have opinions.
 
 ## Why "Directions"
 
@@ -76,6 +114,8 @@ The framing matters because it shapes how people think about participation. You'
 
 ## What We Believe
 
+**The mechanism works.** Prediction markets aggregate information better than any alternative we know. Applying them to civic problems isn't speculation—it's application of proven technology to an underserved domain.
+
 **Judgment is valuable.** The ability to assess what will actually work—not what sounds good, not what's politically safe, but what will solve the problem—is a skill worth rewarding.
 
 **Skin in the game clarifies thinking.** When your money is on the line, you think harder. You seek out information. You update when you're wrong. Stakes make people honest with themselves.
@@ -85,6 +125,16 @@ The framing matters because it shapes how people think about participation. You'
 **Outcomes over activity.** Meetings, reports, and proposals are means, not ends. The only metric that matters is: did the problem get solved?
 
 **Permissionless participation.** Good ideas can come from anywhere. Systems that filter by credential miss the retired engineer, the observant teenager, the immigrant who's seen better solutions elsewhere.
+
+## The Name
+
+**Komon** (コモン) comes from "commons"—shared resources that belong to everyone.
+
+Civic problems are commons problems. The pothole affects everyone who uses that road. The broken streetlight affects everyone who walks that block at night. The polluted park affects every family in the neighborhood.
+
+Commons problems require collective action, but collective action is hard. Komon is infrastructure for making it easier—a protocol for coordinating around shared problems.
+
+Shared problems deserve shared solutions.
 
 ## The Long Game
 
@@ -96,13 +146,17 @@ The goal isn't to replace government. It's to create a signal that government (a
 
 That signal could inform budget allocation, prioritize maintenance schedules, or simply give city officials cover to try something new. "The community has put $5,000 behind this approach and the prediction market shows 78% confidence" is a different conversation than "some residents suggested this at a town hall."
 
-## Shared Problems Deserve Shared Solutions
+## The Opportunity
 
-This is the tagline, but it's also the thesis.
+We're taking the most powerful information-aggregation mechanism ever invented and pointing it at something that matters.
 
-Problems that affect everyone should be solvable by anyone with good judgment, regardless of their position, connections, or credentials. And when solutions work, the people who saw it coming should be rewarded.
+Not elections that happen once every few years. Not sports scores that reset every season. Not celebrity gossip that entertains but changes nothing.
 
-That's the future Komon is building toward. Not a smarter complaint box—a protocol for collective problem-solving, where good judgment is recognized and outcomes are what matter.
+The problems you walk past every day. The ones that make you think "someone should fix this."
+
+Prediction markets work. Civic problems need solutions. The connection seems obvious in retrospect.
+
+**Shared problems deserve shared solutions.**
 
 ---
 

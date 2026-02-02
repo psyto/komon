@@ -1,18 +1,61 @@
 # Komon
 
-**Komon** (コモン) - A global protocol for civic problem-solving. From "commons" - shared problems deserve shared solutions.
+**Prediction markets have proven they're the best mechanism humanity has for aggregating information.** They outperform polls, experts, and committees. They reward correct judgment and punish wishful thinking.
 
-> "Direct the future. Get rewarded."
+But we've wasted them on entertainment—elections, sports, celebrity gossip.
 
-## Overview
+**Komon points that same mechanism at the problems people actually live with.**
 
-Komon is a decentralized platform where anyone can:
-- **Identify local problems** - Post civic issues in your community
-- **Propose solutions** - Suggest directions with AI-powered feasibility analysis
-- **Stake on outcomes** - Bet on which solutions will work
-- **Get rewarded** - Earn when your predictions are correct
+---
 
-Web3 is invisible to users - they see USD while the backend handles USDC on Solana.
+## The Transformation
+
+Traditional prediction market:
+> "Will the city fix potholes this year?"
+
+Komon:
+> "Which approach will fix THIS pothole?"
+
+The first generates information. The second generates **actionable intelligence**—and rewards the people who provide it.
+
+This is prediction markets graduating from entertainment to infrastructure.
+
+---
+
+## What Changes
+
+**The civic feedback loop inverts.** Instead of citizens complaining and officials deciding, citizens propose AND evaluate. The signal isn't "we're unhappy"—it's "here's what we believe will work, backed by money."
+
+**A new class of civic participant emerges.** Not activists, not bureaucrats—*direction traders*. People who develop expertise in what actually gets problems solved in their neighborhood.
+
+**Local knowledge becomes valuable.** The person who knows the city council member's priorities, or which contractor does good work, or that the park cleanup always happens in spring—that knowledge becomes monetizable.
+
+**Incentives align toward outcomes.** Everyone in the system—problem posters, direction proposers, stakers, verifiers—only wins when problems actually get solved.
+
+---
+
+## How It Works
+
+1. **See a problem** → Post it with location, description, success criteria
+2. **Have an idea?** → Propose a direction (solution approach)
+3. **Think something will work?** → Stake money on YES or NO
+4. **Be right** → Get paid when the problem is resolved
+
+Your track record follows you. Good judgment compounds. Bad judgment is visible.
+
+No credentials required. No connections needed. Just be right more than you're wrong.
+
+---
+
+## The Name
+
+**Komon** (コモン) comes from "commons"—shared resources that belong to everyone.
+
+Civic problems are commons problems: they affect us all, but no one person owns them.
+
+Shared problems deserve shared solutions.
+
+---
 
 ## Architecture
 
@@ -44,6 +87,27 @@ Web3 is invisible to users - they see USD while the backend handles USDC on Sola
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+Web3 is invisible to users—they see USD while the backend handles USDC on Solana.
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [PHILOSOPHY.md](docs/PHILOSOPHY.md) | Why we're building this |
+| [MECHANISM.md](docs/MECHANISM.md) | How the system works |
+| [ECONOMICS.md](docs/ECONOMICS.md) | Revenue model and sustainability |
+| [GOVERNANCE.md](docs/GOVERNANCE.md) | Decision-making and decentralization |
+| [VERIFICATION.md](docs/VERIFICATION.md) | How outcomes are verified |
+| [USER_JOURNEYS.md](docs/USER_JOURNEYS.md) | Flows for different user types |
+| [ROADMAP.md](docs/ROADMAP.md) | Development timeline |
+| [FAQ.md](docs/FAQ.md) | Common questions |
+| [GLOSSARY.md](docs/GLOSSARY.md) | Term definitions |
+| [MANIFESTO.md](docs/MANIFESTO.md) | The short version |
+
+---
+
 ## Project Structure
 
 ```
@@ -59,10 +123,12 @@ komon/
 │   │   ├── components/        # React components
 │   │   └── lib/              # Utilities and helpers
 │   └── prisma/               # Database schema
+├── docs/                       # Documentation
 ├── tests/                     # Anchor tests
-├── Anchor.toml
-└── README.md
+└── Anchor.toml
 ```
+
+---
 
 ## Getting Started
 
@@ -76,128 +142,46 @@ komon/
 
 ### Installation
 
-1. **Clone and install dependencies:**
-   ```bash
-   cd komon
-   npm install
-   cd app && npm install
-   ```
-
-2. **Set up environment:**
-   ```bash
-   cd app
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-3. **Initialize database:**
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-4. **Build Solana programs:**
-   ```bash
-   cd ..
-   anchor build
-   ```
-
-5. **Run development server:**
-   ```bash
-   cd app
-   npm run dev
-   ```
-
-### Deploy to Devnet
-
 ```bash
-# Configure Solana for devnet
-solana config set --url devnet
+# Clone and install dependencies
+cd komon
+npm install
+cd app && npm install
 
-# Deploy programs
-anchor deploy
+# Set up environment
+cp .env.example .env
+# Edit .env with your configuration
 
-# Update program IDs in Anchor.toml and .env
+# Initialize database
+npx prisma generate
+npx prisma db push
+
+# Build Solana programs
+cd ..
+anchor build
+
+# Run development server
+cd app
+npm run dev
 ```
 
-## Smart Contracts
-
-### ProblemRegistry
-
-Manages civic problems with:
-- Problem creation with location, category, deadline
-- Bounty funding
-- Status management (Open → InProgress → Resolved/Closed)
-
-### DirectionMarket
-
-Binary prediction markets for proposed solutions:
-- Direction proposals with AI analysis
-- YES/NO token minting on stake
-- Settlement and reward distribution
-
-### Treasury
-
-Central fund management:
-- USDC deposits and allocations
-- Fee collection (configurable rate)
-- Payout processing
-
-### Reputation
-
-Soulbound (non-transferable) reputation tracking:
-- Problems posted, directions proposed
-- Win/loss records and streaks
-- XP and leveling system
-
-## API Routes
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/problems` | GET, POST | List/create problems |
-| `/api/problems/[id]` | GET, PATCH, DELETE | Problem CRUD |
-| `/api/directions` | GET, POST | List/create directions |
-| `/api/stakes` | GET, POST | Manage stakes |
-| `/api/leaderboard` | GET | User rankings |
-| `/api/ai/analyze` | POST | AI analysis for problems/directions |
+---
 
 ## Tech Stack
 
 - **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
 - **Backend:** Next.js API Routes, Prisma ORM
 - **Database:** PostgreSQL
-- **Blockchain:** Solana (Devnet), Anchor Framework
+- **Blockchain:** Solana, Anchor Framework
 - **AI:** Claude API (Anthropic)
 
-## Key Features
-
-- **AI-Powered Analysis:** Every problem and direction gets automated feasibility assessment
-- **Prediction Markets:** Stake on solutions you believe in
-- **Reputation System:** Build credibility through successful predictions
-- **Wallet Abstraction:** Users interact with USD, never see crypto
-
-## Development
-
-### Running Tests
-
-```bash
-# Anchor tests (requires local validator)
-anchor test
-
-# Frontend tests
-cd app && npm run test
-```
-
-### Building for Production
-
-```bash
-cd app
-npm run build
-```
+---
 
 ## License
 
 MIT
+
+---
 
 ## Contributing
 
@@ -206,3 +190,9 @@ MIT
 3. Commit your changes
 4. Push to the branch
 5. Open a Pull Request
+
+---
+
+**Direct the future. Get rewarded.**
+
+*This is Komon.*
