@@ -1,0 +1,22 @@
+[package]
+name = "direction-market"
+version = "0.1.0"
+description = "Komon Direction Market - Prediction markets for civic solutions"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "direction_market"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.30.0"
+anchor-spl = "0.30.0"
+problem-registry = { path = "../problem-registry", features = ["cpi"] }
+reputation = { path = "../reputation", features = ["cpi"] }

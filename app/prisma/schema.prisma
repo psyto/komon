@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  visitorId       String?   @unique
+  walletAddress   String?   @unique
+  email           String?   @unique
+  displayName     String?
+  createdAt       DateTime  @default(now())
+  lastActiveAt    DateTime?
+
+  problems        Problem[]
+  directions      Direction[]
+  stakes          Stake[]
+  reputation      ReputationCache?
+
+  @@index([visitorId])
+  @@index([walletAddress])
+}
+
+model Problem {
+  id              String    @id @default(cuid())
+  onChainId       BigInt?
+  onChainAddress  String?   @unique
+
+  creator         User      @relation(fields: [creatorId], references: [id])
+  creatorId       String
+
+  title           String    @db.VarChar(100)
+  description     String    @db.VarChar(500)
+
+  locationLat     Float
+  locationLng     Float
+  locationName    String?
+
+  category        ProblemCategory
+  status          ProblemStatus @default(OPEN)
+
+  bountyAmount    BigInt    @default(0)
+  deadline        DateTime
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  resolvedAt      DateTime?
+
+  directions      Direction[]
+  aiAnalysis      ProblemAnalysis?
+
+  @@index([creatorId])
+  @@index([category])
+  @@index([status])
+  @@index([createdAt])
+  @@index([locationLat, locationLng])
+}
+
+model Direction {
+  id              String    @id @default(cuid())
+  onChainId       BigInt?
+  onChainAddress  String?   @unique
+
+  problem         Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problemId       String
+
+  proposer        User      @relation(fields: [proposerId], references: [id])
+  proposerId      String
+
+  description     String    @db.VarChar(500)
+  status          DirectionStatus @default(PROPOSED)
+  isWinner        Boolean   @default(false)
+
+  yesMint         String?
+  noMint          String?
+  yesSupply       BigInt    @default(0)
+  noSupply        BigInt    @default(0)
+  usdcLiquidity   BigInt    @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  settledAt       DateTime?
+  outcome         Outcome?
+
+  stakes          Stake[]
+  aiAnalysis      DirectionAnalysis?
+
+  @@index([problemId])
+  @@index([proposerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Stake {
+  id              String    @id @default(cuid())
+
+  user            User      @relation(fields: [userId], references: [id])
+  userId          String
+
+  direction       Direction @relation(fields: [directionId], references: [id], onDelete: Cascade)
+  directionId     String
+
+  amount          BigInt
+  outcome         Outcome
+  tokenAmount     BigInt
+
+  createdAt       DateTime  @default(now())
+  claimedAt       DateTime?
+  claimedAmount   BigInt?
+
+  @@unique([userId, directionId, outcome])
+  @@index([userId])
+  @@index([directionId])
+}
+
+model ProblemAnalysis {
+  id              String    @id @default(cuid())
+
+  problem         Problem   @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problemId       String    @unique
+
+  feasibility     String    @db.Text
+  estimatedImpact String    @db.Text
+  suggestedApproaches String[] @default([])
+  risks           String[]  @default([])
+  similarProblems String[]  @default([])
+
+  createdAt       DateTime  @default(now())
+}
+
+model DirectionAnalysis {
+  id              String    @id @default(cuid())
+
+  direction       Direction @relation(fields: [directionId], references: [id], onDelete: Cascade)
+  directionId     String    @unique
+
+  feasibilityScore Int
+  reasoning       String    @db.Text
+  strengths       String[]  @default([])
+  weaknesses      String[]  @default([])
+  estimatedCost   String?
+  estimatedTime   String?
+  riskLevel       RiskLevel @default(MEDIUM)
+
+  createdAt       DateTime  @default(now())
+}
+
+model ReputationCache {
+  id              String    @id @default(cuid())
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String    @unique
+
+  problemsPosted  Int       @default(0)
+  directionsProposed Int    @default(0)
+  directionsWon   Int       @default(0)
+  directionsLost  Int       @default(0)
+
+  winRate         Float     @default(0)
+  totalEarned     BigInt    @default(0)
+  totalStaked     BigInt    @default(0)
+
+  currentStreak   Int       @default(0)
+  bestStreak      Int       @default(0)
+
+  level           Int       @default(1)
+  experience      BigInt    @default(0)
+
+  rank            Int?
+
+  updatedAt       DateTime  @updatedAt
+}
+
+// Enums
+
+enum ProblemCategory {
+  INFRASTRUCTURE
+  ENVIRONMENT
+  SAFETY
+  HEALTH
+  EDUCATION
+  TRANSPORTATION
+  HOUSING
+  COMMUNITY
+  ECONOMIC
+  OTHER
+}
+
+enum ProblemStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum DirectionStatus {
+  PROPOSED
+  ACTIVE
+  SETTLED
+  REJECTED
+}
+
+enum Outcome {
+  YES
+  NO
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
