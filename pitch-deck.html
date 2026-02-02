@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Komon - Pitch Deck</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #0a0a0a;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    .deck {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      height: 100%;
+      padding: 60px 80px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    .slide-number {
+      position: fixed;
+      bottom: 20px;
+      right: 30px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    h1 {
+      font-size: 72px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      line-height: 1.1;
+    }
+
+    h2 {
+      font-size: 56px;
+      font-weight: 700;
+      margin-bottom: 40px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      font-size: 36px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #10b981;
+    }
+
+    p {
+      font-size: 28px;
+      line-height: 1.6;
+      color: #d1d5db;
+      max-width: 900px;
+    }
+
+    .tagline {
+      font-size: 32px;
+      color: #10b981;
+      margin-bottom: 40px;
+    }
+
+    .subtitle {
+      font-size: 24px;
+      color: #9ca3af;
+      margin-top: 20px;
+    }
+
+    .highlight {
+      color: #10b981;
+    }
+
+    .dim {
+      color: #6b7280;
+    }
+
+    blockquote {
+      font-size: 36px;
+      font-style: italic;
+      border-left: 4px solid #10b981;
+      padding-left: 30px;
+      margin: 40px 0;
+      color: #e5e7eb;
+    }
+
+    ul {
+      list-style: none;
+      font-size: 28px;
+      line-height: 2;
+    }
+
+    ul li {
+      padding-left: 40px;
+      position: relative;
+      color: #d1d5db;
+    }
+
+    ul li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      margin-top: 40px;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 40px;
+      align-items: center;
+      margin: 40px 0;
+    }
+
+    .comparison-arrow {
+      font-size: 48px;
+      color: #10b981;
+    }
+
+    .comparison-box {
+      background: #1f2937;
+      padding: 40px;
+      border-radius: 16px;
+    }
+
+    .comparison-box.old {
+      border: 2px solid #374151;
+    }
+
+    .comparison-box.new {
+      border: 2px solid #10b981;
+    }
+
+    .comparison-box h4 {
+      font-size: 20px;
+      color: #9ca3af;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .comparison-box p {
+      font-size: 24px;
+      color: #ffffff;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 40px;
+      margin-top: 40px;
+    }
+
+    .stat-box {
+      background: #1f2937;
+      padding: 40px;
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 56px;
+      font-weight: 700;
+      color: #10b981;
+    }
+
+    .stat-label {
+      font-size: 18px;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
+
+    .flow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 40px 0;
+    }
+
+    .flow-step {
+      text-align: center;
+      flex: 1;
+    }
+
+    .flow-step .number {
+      width: 60px;
+      height: 60px;
+      background: #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 auto 16px;
+    }
+
+    .flow-step .label {
+      font-size: 22px;
+      color: #e5e7eb;
+    }
+
+    .flow-arrow {
+      font-size: 32px;
+      color: #374151;
+      padding: 0 10px;
+    }
+
+    .revenue-table {
+      width: 100%;
+      margin-top: 40px;
+      border-collapse: collapse;
+    }
+
+    .revenue-table th,
+    .revenue-table td {
+      padding: 20px 30px;
+      text-align: left;
+      font-size: 24px;
+    }
+
+    .revenue-table th {
+      background: #1f2937;
+      color: #9ca3af;
+      font-weight: 600;
+    }
+
+    .revenue-table td {
+      border-bottom: 1px solid #374151;
+    }
+
+    .revenue-table .highlight-row td {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .phase-timeline {
+      display: flex;
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .phase {
+      flex: 1;
+      background: #1f2937;
+      padding: 30px;
+      border-radius: 12px;
+      border-top: 4px solid #374151;
+    }
+
+    .phase.current {
+      border-top-color: #10b981;
+    }
+
+    .phase h4 {
+      font-size: 18px;
+      color: #10b981;
+      margin-bottom: 8px;
+    }
+
+    .phase h5 {
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    .phase p {
+      font-size: 16px;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+
+    .center-slide {
+      text-align: center;
+      align-items: center;
+    }
+
+    .center-slide h1,
+    .center-slide h2,
+    .center-slide p {
+      max-width: 100%;
+    }
+
+    .logo {
+      font-size: 120px;
+      font-weight: 800;
+      letter-spacing: -4px;
+      margin-bottom: 16px;
+    }
+
+    .logo-jp {
+      font-size: 32px;
+      color: #6b7280;
+      margin-bottom: 40px;
+    }
+
+    /* Speaker Notes Panel */
+    .notes-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #111827;
+      border-top: 2px solid #10b981;
+      padding: 20px 40px;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      max-height: 35vh;
+      overflow-y: auto;
+    }
+
+    .notes-panel.visible {
+      transform: translateY(0);
+    }
+
+    .notes-panel h4 {
+      font-size: 14px;
+      color: #10b981;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .notes-panel p {
+      font-size: 18px;
+      line-height: 1.7;
+      color: #d1d5db;
+    }
+
+    .notes-panel ul {
+      font-size: 18px;
+      line-height: 1.8;
+    }
+
+    .notes-panel ul li {
+      padding-left: 24px;
+    }
+
+    /* Controls */
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 30px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .control-btn {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #9ca3af;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      background: #374151;
+      color: #ffffff;
+    }
+
+    .control-btn.active {
+      background: #10b981;
+      border-color: #10b981;
+      color: #000000;
+    }
+
+    /* Navigation hints */
+    .nav-hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #4b5563;
+    }
+
+    /* Print styles */
+    @media print {
+      .slide {
+        display: flex !important;
+        page-break-after: always;
+        height: auto;
+        min-height: 100vh;
+      }
+      .controls, .nav-hint, .slide-number {
+        display: none;
+      }
+      .notes-panel {
+        position: relative;
+        transform: none;
+        border: 1px solid #ccc;
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+
+    <!-- Slide 1: Title -->
+    <div class="slide center-slide active" data-notes="
+      <p><strong>Opening hook:</strong> Don't start with 'Hi, I'm...' — start with the insight.</p>
+      <p>Pause after 'wasted them on entertainment' — let it land.</p>
+      <p>The name: Komon (コモン) from 'commons' — shared problems, shared solutions.</p>
+      <p><strong>Transition:</strong> 'Let me show you what I mean...'</p>
+    ">
+      <div class="logo">Komon</div>
+      <div class="logo-jp">コモン</div>
+      <p class="tagline">Prediction markets for civic problem-solving</p>
+      <p class="subtitle">Shared problems deserve shared solutions</p>
+    </div>
+
+    <!-- Slide 2: The Wasted Miracle -->
+    <div class="slide" data-notes="
+      <p><strong>Key point:</strong> Prediction markets WORK. This isn't speculation — it's proven.</p>
+      <ul>
+        <li>They called the 2020 election better than 538</li>
+        <li>They priced COVID risks before officials acknowledged them</li>
+        <li>They surface information no individual has</li>
+      </ul>
+      <p><strong>The twist:</strong> And what do we use this miracle for? Betting on sports and elections.</p>
+      <p><strong>Emotion:</strong> This should feel like a waste. A missed opportunity.</p>
+    ">
+      <h2>Prediction markets are a <span class="highlight">miracle</span> of collective intelligence.</h2>
+      <p>They outperform polls. They outperform experts. They outperform committees.</p>
+      <p style="margin-top: 40px; font-size: 36px; color: #ffffff;">And we've wasted them on <span class="dim">elections, sports, and celebrity gossip</span>.</p>
+    </div>
+
+    <!-- Slide 3: The Transformation -->
+    <div class="slide" data-notes="
+      <p><strong>This is THE slide.</strong> The core insight. Spend time here.</p>
+      <p>The left side is passive — you're observing what will happen.</p>
+      <p>The right side is active — you're prescribing what SHOULD happen.</p>
+      <p><strong>Key phrase:</strong> 'From information to actionable intelligence.'</p>
+      <p><strong>Analogy:</strong> It's like the difference between a weather forecast and a navigation system.</p>
+    ">
+      <h3>The Transformation</h3>
+      <div class="comparison">
+        <div class="comparison-box old">
+          <h4>Traditional Prediction Market</h4>
+          <p>"Will the city fix potholes this year?"</p>
+        </div>
+        <div class="comparison-arrow">→</div>
+        <div class="comparison-box new">
+          <h4>Komon</h4>
+          <p>"Which approach will fix THIS pothole?"</p>
+        </div>
+      </div>
+      <p style="text-align: center; margin-top: 40px;">
+        <span class="dim">Information</span> → <span class="highlight">Actionable Intelligence</span>
+      </p>
+    </div>
+
+    <!-- Slide 4: What Changes -->
+    <div class="slide" data-notes="
+      <p><strong>Four transformations</strong> — each is a paradigm shift:</p>
+      <ul>
+        <li><strong>Feedback loop:</strong> Citizens don't just complain — they propose AND evaluate</li>
+        <li><strong>New role:</strong> 'Direction traders' — people who become experts in what works locally</li>
+        <li><strong>Local knowledge:</strong> The retired engineer, the shop owner who's seen 3 fixes fail</li>
+        <li><strong>Incentives:</strong> Everyone only wins when problems actually get solved</li>
+      </ul>
+      <p><strong>Emphasis:</strong> This isn't incremental improvement — it's structural change.</p>
+    ">
+      <h2>What Changes</h2>
+      <ul>
+        <li><strong>The civic feedback loop inverts.</strong> Citizens propose AND evaluate — not just complain.</li>
+        <li><strong>A new role emerges.</strong> Direction traders — experts in what actually works locally.</li>
+        <li><strong>Local knowledge becomes valuable.</strong> What you know about your neighborhood is monetizable.</li>
+        <li><strong>Incentives align toward outcomes.</strong> Everyone only wins when problems get solved.</li>
+      </ul>
+    </div>
+
+    <!-- Slide 5: How It Works -->
+    <div class="slide" data-notes="
+      <p><strong>Keep this simple.</strong> Don't get lost in mechanics.</p>
+      <p>The flow should feel obvious — 'of course it works this way.'</p>
+      <ul>
+        <li>Step 1: Like posting to Nextdoor, but with clear success criteria</li>
+        <li>Step 2: Propose a 'direction' — a hypothesis about what will work</li>
+        <li>Step 3: Stake money on YES (it will work) or NO (it won't)</li>
+        <li>Step 4: When problem is verified solved, correct predictions get paid</li>
+      </ul>
+      <p><strong>Key point:</strong> No crypto knowledge needed — users see dollars, we handle the rest.</p>
+    ">
+      <h2>How It Works</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="number">1</div>
+          <div class="label">Post a Problem</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="number">2</div>
+          <div class="label">Propose Directions</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="number">3</div>
+          <div class="label">Stake YES/NO</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="number">4</div>
+          <div class="label">Get Rewarded</div>
+        </div>
+      </div>
+      <p style="text-align: center; margin-top: 60px;">
+        No crypto knowledge required. Users see <span class="highlight">dollars</span>. We handle the rest.
+      </p>
+    </div>
+
+    <!-- Slide 6: Why Civic Problems -->
+    <div class="slide" data-notes="
+      <p><strong>Address the skeptic:</strong> Why not just use regular prediction markets?</p>
+      <p>Civic problems are DIFFERENT:</p>
+      <ul>
+        <li><strong>Hyperlocal:</strong> No Reuters feed for 'streetlight on Elm St'</li>
+        <li><strong>Actionable:</strong> Unlike elections, someone can actually DO something</li>
+        <li><strong>Verifiable:</strong> Was the pothole fixed? We can check.</li>
+        <li><strong>Commons:</strong> Affects everyone, owned by no one</li>
+      </ul>
+      <p><strong>Insight:</strong> These properties make them BETTER for prediction markets, not worse.</p>
+    ">
+      <h2>Why Civic Problems?</h2>
+      <div class="two-col">
+        <div>
+          <h3>They're hyperlocal</h3>
+          <p>No global data feed. The signal comes from people who live there.</p>
+        </div>
+        <div>
+          <h3>They're actionable</h3>
+          <p>Unlike "who wins the election" — someone can actually implement a solution.</p>
+        </div>
+        <div style="margin-top: 40px;">
+          <h3>They're verifiable</h3>
+          <p>Was the pothole fixed? Yes or no. Reality is the oracle.</p>
+        </div>
+        <div style="margin-top: 40px;">
+          <h3>They're commons problems</h3>
+          <p>Affect everyone. Owned by no one. Perfect for collective intelligence.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Market Opportunity -->
+    <div class="slide" data-notes="
+      <p><strong>Size the opportunity without being ridiculous.</strong></p>
+      <ul>
+        <li>311 apps: $500M+ market, but they just collect complaints</li>
+        <li>Prediction markets: $1B+ volume in 2024 (Polymarket alone)</li>
+        <li>Civic tech: Underleveraged category, mostly grant-funded</li>
+      </ul>
+      <p><strong>Key insight:</strong> We're not competing with 311 — we're replacing the 'what should we do' meeting with a market.</p>
+      <p><strong>TAM:</strong> Every city in the world has problems. Start with one neighborhood.</p>
+    ">
+      <h2>Market Opportunity</h2>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-number">$1B+</div>
+          <div class="stat-label">Prediction market volume (2024)</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">20%</div>
+          <div class="stat-label">Americans who trust local gov</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">0</div>
+          <div class="stat-label">Prediction markets for local problems</div>
+        </div>
+      </div>
+      <p style="text-align: center; margin-top: 60px;">
+        Prediction markets work. Civic trust is broken. <span class="highlight">We connect them.</span>
+      </p>
+    </div>
+
+    <!-- Slide 8: Business Model -->
+    <div class="slide" data-notes="
+      <p><strong>Simple, aligned business model.</strong></p>
+      <ul>
+        <li>We only make money when money flows through the system</li>
+        <li>Money only flows when problems get solved and payouts happen</li>
+        <li>Therefore: our incentives align with users</li>
+      </ul>
+      <p><strong>Unit economics:</strong> ~$22 revenue per problem at 95% gross margin.</p>
+      <p><strong>Breakeven:</strong> ~750 problems/month.</p>
+      <p><strong>Future revenue:</strong> API access, data products, government dashboards.</p>
+    ">
+      <h2>Business Model</h2>
+      <table class="revenue-table">
+        <tr>
+          <th>Action</th>
+          <th>Fee</th>
+          <th>Who Pays</th>
+        </tr>
+        <tr>
+          <td>Stake placed</td>
+          <td>0%</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Winning payout</td>
+          <td>2.5%</td>
+          <td>Winners</td>
+        </tr>
+        <tr>
+          <td>Bounty posted</td>
+          <td>5%</td>
+          <td>Problem creator</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>Breakeven</td>
+          <td colspan="2">~750 problems/month</td>
+        </tr>
+      </table>
+      <p style="margin-top: 40px;">We only make money when problems get solved.</p>
+    </div>
+
+    <!-- Slide 9: Roadmap -->
+    <div class="slide" data-notes="
+      <p><strong>Show focus and discipline.</strong></p>
+      <ul>
+        <li><strong>Phase 0 (now):</strong> Core built — Solana programs, Next.js frontend, AI integration</li>
+        <li><strong>Phase 1 (2 months):</strong> Working product, devnet, one neighborhood</li>
+        <li><strong>Phase 2:</strong> Real users, real problems, one city</li>
+        <li><strong>Phase 3:</strong> Decentralized verification, city-wide</li>
+        <li><strong>Phase 4:</strong> Multi-city, revenue</li>
+      </ul>
+      <p><strong>Key message:</strong> We start small and prove it works before scaling.</p>
+    ">
+      <h2>Roadmap</h2>
+      <div class="phase-timeline">
+        <div class="phase current">
+          <h4>Phase 0</h4>
+          <h5>Foundation</h5>
+          <p>Solana programs built. Frontend ready. AI integrated. ✓</p>
+        </div>
+        <div class="phase">
+          <h4>Phase 1</h4>
+          <h5>MVP</h5>
+          <p>Working product on devnet. First 10 problems. End-to-end flow.</p>
+        </div>
+        <div class="phase">
+          <h4>Phase 2</h4>
+          <h5>Private Beta</h5>
+          <p>One neighborhood. 50 users. First problem solved via Komon.</p>
+        </div>
+        <div class="phase">
+          <h4>Phase 3</h4>
+          <h5>Public Beta</h5>
+          <p>City-wide. Decentralized verification. 500 users.</p>
+        </div>
+        <div class="phase">
+          <h4>Phase 4</h4>
+          <h5>Growth</h5>
+          <p>Multi-city. Revenue. Government partnerships.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Why Now -->
+    <div class="slide" data-notes="
+      <p><strong>Timing matters.</strong> Why wasn't this built before?</p>
+      <ul>
+        <li><strong>Crypto infra ready:</strong> Solana does 400ms finality at $0.0002/tx — small stakes viable</li>
+        <li><strong>Wallet abstraction:</strong> Users never see crypto. This wasn't possible 3 years ago.</li>
+        <li><strong>Cultural shift:</strong> Polymarket did $1B+ volume. Prediction markets are mainstream.</li>
+        <li><strong>Remote work:</strong> People are home. They notice local problems. They care more.</li>
+      </ul>
+      <p><strong>Convergence:</strong> The tech is ready. The culture is ready. The need is urgent.</p>
+    ">
+      <h2>Why Now</h2>
+      <ul>
+        <li><strong>Crypto infrastructure is ready.</strong> Solana: 400ms finality, $0.0002/tx. Small stakes are viable.</li>
+        <li><strong>Wallet abstraction works.</strong> Users see dollars. No seed phrases. No gas fees.</li>
+        <li><strong>Prediction markets went mainstream.</strong> Polymarket did $1B+ in 2024. Cultural acceptance.</li>
+        <li><strong>Civic trust is at historic lows.</strong> People want agency, not just voice.</li>
+        <li><strong>Remote work changed neighborhoods.</strong> People are home. They notice. They care.</li>
+      </ul>
+    </div>
+
+    <!-- Slide 11: The Ask -->
+    <div class="slide" data-notes="
+      <p><strong>Be specific about what you need.</strong></p>
+      <p>Pre-seed: $250K for 6 months runway, 2 engineers, single-city pilot.</p>
+      <p><strong>Milestones for the money:</strong></p>
+      <ul>
+        <li>Working product on mainnet</li>
+        <li>100 users in one neighborhood</li>
+        <li>10 problems resolved through Komon</li>
+        <li>Proof that prediction markets work for civic problems</li>
+      </ul>
+      <p><strong>What we're NOT asking for:</strong> Help with product. We know what to build.</p>
+    ">
+      <h2>The Ask</h2>
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="stat-number">$250K</div>
+          <div class="stat-label">Pre-seed</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">6 mo</div>
+          <div class="stat-label">Runway</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number">1 city</div>
+          <div class="stat-label">Pilot</div>
+        </div>
+      </div>
+      <p style="text-align: center; margin-top: 60px;">
+        <strong>Milestones:</strong> 100 users. 10 problems solved. Proof the mechanism works.
+      </p>
+    </div>
+
+    <!-- Slide 12: Close -->
+    <div class="slide center-slide" data-notes="
+      <p><strong>End with the transformation, not the product.</strong></p>
+      <p>Reiterate: We're taking a proven mechanism and pointing it at something that matters.</p>
+      <p><strong>Last line:</strong> 'The problems you walk past every day — the ones that make you think someone should fix this. That someone might be you. Not by fixing it yourself. But by correctly identifying what will work.'</p>
+      <p><strong>Then silence.</strong> Let them respond.</p>
+    ">
+      <h2>Prediction markets <span class="highlight">work</span>.</h2>
+      <h2 style="margin-top: 20px;">Civic problems need <span class="highlight">solutions</span>.</h2>
+      <p style="font-size: 36px; margin-top: 60px; color: #ffffff;">
+        We're connecting them.
+      </p>
+      <p class="tagline" style="margin-top: 60px;">Direct the future. Get rewarded.</p>
+    </div>
+
+  </div>
+
+  <!-- Speaker Notes Panel -->
+  <div class="notes-panel" id="notesPanel">
+    <h4>Speaker Notes</h4>
+    <div id="notesContent"></div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="control-btn" onclick="toggleNotes()" id="notesBtn">Notes (N)</button>
+    <button class="control-btn" onclick="prevSlide()">← Prev</button>
+    <button class="control-btn" onclick="nextSlide()">Next →</button>
+  </div>
+
+  <div class="slide-number" id="slideNumber">1 / 12</div>
+  <div class="nav-hint">Use arrow keys or click to navigate • Press N for speaker notes</div>
+
+  <script>
+    let currentSlide = 0;
+    let notesVisible = false;
+    const slides = document.querySelectorAll('.slide');
+    const notesPanel = document.getElementById('notesPanel');
+    const notesContent = document.getElementById('notesContent');
+    const notesBtn = document.getElementById('notesBtn');
+    const slideNumber = document.getElementById('slideNumber');
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+      });
+      currentSlide = index;
+      slideNumber.textContent = `${index + 1} / ${slides.length}`;
+      updateNotes();
+    }
+
+    function nextSlide() {
+      if (currentSlide < slides.length - 1) {
+        showSlide(currentSlide + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function toggleNotes() {
+      notesVisible = !notesVisible;
+      notesPanel.classList.toggle('visible', notesVisible);
+      notesBtn.classList.toggle('active', notesVisible);
+      if (notesVisible) {
+        updateNotes();
+      }
+    }
+
+    function updateNotes() {
+      const currentSlideEl = slides[currentSlide];
+      const notes = currentSlideEl.getAttribute('data-notes') || '<p>No notes for this slide.</p>';
+      notesContent.innerHTML = notes;
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'n' || e.key === 'N') {
+        toggleNotes();
+      } else if (e.key === 'Home') {
+        showSlide(0);
+      } else if (e.key === 'End') {
+        showSlide(slides.length - 1);
+      }
+    });
+
+    // Click navigation
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.controls') || e.target.closest('.notes-panel')) return;
+      if (e.clientX > window.innerWidth / 2) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    });
+
+    // Initialize
+    showSlide(0);
+  </script>
+</body>
+</html>
