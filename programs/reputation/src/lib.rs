@@ -275,7 +275,7 @@ pub mod reputation {
         // Anchor instruction discriminator for update_civic_score + score argument
         let mut data = Vec::with_capacity(10);
         // Discriminator for "update_civic_score" (first 8 bytes of sha256("global:update_civic_score"))
-        data.extend_from_slice(&[0x6f, 0x48, 0x91, 0x8f, 0x0c, 0x30, 0x5c, 0x2b]);
+        data.extend_from_slice(&[62, 199, 170, 21, 48, 132, 219, 245]);
         // Score as u16 little-endian
         data.extend_from_slice(&civic_score.to_le_bytes());
 
