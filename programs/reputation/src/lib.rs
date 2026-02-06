@@ -1,5 +1,8 @@
 use anchor_lang::prelude::*;
 
+pub mod sovereign;
+pub use sovereign::*;
+
 declare_id!("3FHAQavHdHT1b7YPP4jSwFZi21iAXgVoDP1tfz2XRsME");
 
 #[program]
@@ -247,6 +250,86 @@ pub mod reputation {
 
         Ok(())
     }
+
+    /// Sync Komon reputation to SOVEREIGN civic score
+    /// This allows the user's Komon civic participation to contribute
+    /// to their universal SOVEREIGN identity
+    pub fn sync_to_sovereign(ctx: Context<SyncToSovereign>) -> Result<()> {
+        let reputation = &ctx.accounts.reputation;
+
+        // Calculate civic score from Komon reputation
+        let civic_score = calculate_civic_score(
+            reputation.problems_posted,
+            reputation.directions_proposed,
+            reputation.directions_won,
+            reputation.directions_lost,
+            reputation.win_rate,
+            reputation.current_streak,
+            reputation.level,
+        );
+
+        // Build CPI to SOVEREIGN program
+        let cpi_program = ctx.accounts.sovereign_program.to_account_info();
+
+        // Create instruction data for update_civic_score
+        // Anchor instruction discriminator for update_civic_score + score argument
+        let mut data = Vec::with_capacity(10);
+        // Discriminator for "update_civic_score" (first 8 bytes of sha256("global:update_civic_score"))
+        data.extend_from_slice(&[0x6f, 0x48, 0x91, 0x8f, 0x0c, 0x30, 0x5c, 0x2b]);
+        // Score as u16 little-endian
+        data.extend_from_slice(&civic_score.to_le_bytes());
+
+        let account_metas = vec![
+            AccountMeta::new_readonly(ctx.accounts.user.key(), true), // authority (signer)
+            AccountMeta::new(ctx.accounts.sovereign_identity.key(), false), // identity
+        ];
+
+        let ix = anchor_lang::solana_program::instruction::Instruction {
+            program_id: sovereign::SOVEREIGN_PROGRAM_ID,
+            accounts: account_metas,
+            data,
+        };
+
+        anchor_lang::solana_program::program::invoke(
+            &ix,
+            &[
+                ctx.accounts.user.to_account_info(),
+                ctx.accounts.sovereign_identity.to_account_info(),
+            ],
+        )?;
+
+        emit!(SyncedToSovereign {
+            user: reputation.user,
+            civic_score,
+        });
+
+        msg!(
+            "Synced Komon reputation to SOVEREIGN: civic_score={}",
+            civic_score
+        );
+        Ok(())
+    }
+
+    /// Get a user's SOVEREIGN tier (read-only, no CPI)
+    /// Returns the user's tier level (1-5) or 1 if no SOVEREIGN identity
+    pub fn get_sovereign_tier(ctx: Context<GetSovereignTier>) -> Result<u8> {
+        // Deserialize the SOVEREIGN identity account
+        let sovereign_data = ctx.accounts.sovereign_identity.try_borrow_data()?;
+
+        // Skip 8-byte discriminator
+        if sovereign_data.len() < SovereignIdentity::SIZE {
+            return Ok(1); // Default tier if account doesn't exist
+        }
+
+        // Parse tier from the account data
+        // Tier is at offset: 8 (disc) + 32 (owner) + 8 (created) + 32*4 (authorities) + 2*4 (scores) + 2 (composite) = 186
+        let tier_offset = 8 + 32 + 8 + (32 * 4) + (2 * 4) + 2;
+        if sovereign_data.len() > tier_offset {
+            Ok(sovereign_data[tier_offset])
+        } else {
+            Ok(1)
+        }
+    }
 }
 
 /// Calculate and update user level based on experience
@@ -353,6 +436,33 @@ pub struct UpdateReputationCpi<'info> {
     pub caller: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct SyncToSovereign<'info> {
+    #[account(
+        seeds = [b"reputation", user.key().as_ref()],
+        bump = reputation.bump,
+        constraint = reputation.user == user.key()
+    )]
+    pub reputation: Account<'info, Reputation>,
+
+    /// The user must sign to authorize sync
+    pub user: Signer<'info>,
+
+    /// CHECK: SOVEREIGN identity account (validated by SOVEREIGN program)
+    #[account(mut)]
+    pub sovereign_identity: UncheckedAccount<'info>,
+
+    /// CHECK: SOVEREIGN program for CPI
+    #[account(address = sovereign::SOVEREIGN_PROGRAM_ID)]
+    pub sovereign_program: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
+pub struct GetSovereignTier<'info> {
+    /// CHECK: SOVEREIGN identity account (read-only)
+    pub sovereign_identity: UncheckedAccount<'info>,
+}
+
 // ============================================================================
 // State
 // ============================================================================
@@ -430,4 +540,10 @@ pub struct LevelUp {
     pub old_level: u8,
     pub new_level: u8,
     pub experience: u64,
+}
+
+#[event]
+pub struct SyncedToSovereign {
+    pub user: Pubkey,
+    pub civic_score: u16,
 }
