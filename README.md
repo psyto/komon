@@ -77,7 +77,14 @@ Shared problems deserve shared solutions.
 │  - ProblemRegistry: Post problems with evidence                  │
 │  - DirectionMarket: Binary outcome markets per solution          │
 │  - Treasury: Pool for rewards + fee distribution                 │
-│  - Reputation: Soulbound tokens for track record                 │
+│  - Reputation: Track record + SOVEREIGN integration              │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    SOVEREIGN PROTOCOL                            │
+│  Universal identity with multi-dimensional reputation            │
+│  Komon syncs civic scores ──► SOVEREIGN identity                │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -88,6 +95,56 @@ Shared problems deserve shared solutions.
 ```
 
 Web3 is invisible to users—they see USD while the backend handles USDC on Solana.
+
+---
+
+## SOVEREIGN Integration
+
+Komon integrates with [SOVEREIGN](https://github.com/psyto/sovereign), a universal identity and multi-dimensional reputation protocol. Your civic participation in Komon contributes to your portable SOVEREIGN identity.
+
+### How It Works
+
+```
+Komon Reputation                    SOVEREIGN Identity
+─────────────────                   ──────────────────
+Win rate          ───┐
+Directions won       ├──► Civic Score ──► Composite Score ──► Tier
+Level/XP             │
+Streak           ───┘
+```
+
+### Benefits
+
+- **Portable Reputation**: Your Komon civic score syncs to SOVEREIGN, usable across other apps
+- **Tier-Based Access**: Higher SOVEREIGN tiers unlock higher stake limits
+- **Cross-App Recognition**: Build reputation in Komon, get recognized in Umbra, Dverse, and more
+
+### Stake Limits by Tier
+
+| Tier | Name | Max Stake |
+|------|------|-----------|
+| 1 | Bronze | 100 USDC |
+| 2 | Silver | 500 USDC |
+| 3 | Gold | 2,000 USDC |
+| 4 | Platinum | 10,000 USDC |
+| 5 | Diamond | Unlimited |
+
+### Syncing Your Reputation
+
+Users can sync their Komon reputation to SOVEREIGN at any time:
+
+```typescript
+// Sync Komon reputation to SOVEREIGN civic score
+await reputationProgram.methods
+  .syncToSovereign()
+  .accounts({
+    reputation: userReputation,
+    user: wallet.publicKey,
+    sovereignIdentity: sovereignPda,
+    sovereignProgram: SOVEREIGN_PROGRAM_ID,
+  })
+  .rpc();
+```
 
 ---
 
@@ -117,6 +174,9 @@ komon/
 │   ├── direction-market/        # Prediction markets
 │   ├── treasury/               # Fund management
 │   └── reputation/             # Soulbound reputation
+│       └── src/
+│           ├── lib.rs          # Main program
+│           └── sovereign/      # SOVEREIGN integration
 ├── app/                        # Next.js frontend
 │   ├── src/
 │   │   ├── app/               # Pages and API routes
