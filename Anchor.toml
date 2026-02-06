@@ -9,13 +9,13 @@ skip-lint = false
 problem_registry = "Fo1fm7iZpnpyCo8zbnnSN2g8zb6zFAips3hxk24NZETr"
 direction_market = "8yX75Q8Go26wGTmttuVQuzMvGFYa6mWPHtGXV8vHGZzt"
 treasury = "BYbmC2bdPSNELqpXqCXY9iKiDMf9hUWFdcExGiHUZSRZ"
-reputation = "3FHAQavHdHT1b7YPP4jSwFZi21iAXgVoDP1tfz2XRsME"
+reputation = "AWDeGkLSX3HcU2s8vhYThxLeDQ4N9DqhnREuZU36vuJU"
 
 [programs.localnet]
 problem_registry = "Fo1fm7iZpnpyCo8zbnnSN2g8zb6zFAips3hxk24NZETr"
 direction_market = "8yX75Q8Go26wGTmttuVQuzMvGFYa6mWPHtGXV8vHGZzt"
 treasury = "BYbmC2bdPSNELqpXqCXY9iKiDMf9hUWFdcExGiHUZSRZ"
-reputation = "3FHAQavHdHT1b7YPP4jSwFZi21iAXgVoDP1tfz2XRsME"
+reputation = "AWDeGkLSX3HcU2s8vhYThxLeDQ4N9DqhnREuZU36vuJU"
 
 [registry]
 url = "https://api.apr.dev"

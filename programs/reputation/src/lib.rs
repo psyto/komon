@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 pub mod sovereign;
 pub use sovereign::*;
 
-declare_id!("3FHAQavHdHT1b7YPP4jSwFZi21iAXgVoDP1tfz2XRsME");
+declare_id!("AWDeGkLSX3HcU2s8vhYThxLeDQ4N9DqhnREuZU36vuJU");
 
 #[program]
 pub mod reputation {
