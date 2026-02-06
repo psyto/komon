@@ -1,9 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { MapPin, Trophy, User, Plus, Home } from "lucide-react";
+import { SovereignNavBadge } from "@/components/sovereign";
+import { SovereignIdentity } from "@/lib/solana/sovereign";
+
+// Mock SOVEREIGN identity for demo - in production, fetch from chain
+const mockSovereignIdentity: SovereignIdentity | null = {
+  owner: null as any,
+  tradingScore: 2500,
+  civicScore: 6800,
+  developerScore: 1200,
+  infraScore: 800,
+  compositeScore: 3264,
+  tier: 2,
+};
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -14,6 +28,7 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const [sovereignIdentity] = useState<SovereignIdentity | null>(mockSovereignIdentity);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -41,7 +56,8 @@ export function Navigation() {
             })}
           </nav>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex flex-1 items-center justify-end space-x-3">
+          <SovereignNavBadge identity={sovereignIdentity} />
           <Link
             href="/problems/new"
             className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"

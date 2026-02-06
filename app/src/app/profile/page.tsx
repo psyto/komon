@@ -12,8 +12,11 @@ import {
   MapPin,
   MessageSquare,
   ArrowRight,
+  Shield,
 } from "lucide-react";
 import { cn, formatCurrency, formatPercent, formatDate } from "@/lib/utils";
+import { SovereignTierBadge } from "@/components/sovereign";
+import { SovereignIdentity, getStakeLimit } from "@/lib/solana/sovereign";
 
 // Mock user data
 const mockUser = {
@@ -85,9 +88,22 @@ const mockStakes = [
   },
 ];
 
+// Mock SOVEREIGN identity - in production, this would be fetched from chain
+const mockSovereignIdentity: SovereignIdentity | null = {
+  owner: null as any, // Would be PublicKey in production
+  tradingScore: 2500,
+  civicScore: 6800,  // High civic score from Komon participation
+  developerScore: 1200,
+  infraScore: 800,
+  compositeScore: 3264, // Calculated composite
+  tier: 2, // Silver tier
+};
+
 export default function ProfilePage() {
   const [user] = useState(mockUser);
   const [activeTab, setActiveTab] = useState<"problems" | "stakes">("problems");
+  const [sovereignIdentity] = useState<SovereignIdentity | null>(mockSovereignIdentity);
+  const stakeLimit = getStakeLimit(sovereignIdentity?.tier ?? 0);
 
   // Calculate level progress
   const currentLevelXp = user.reputation.level * (user.reputation.level + 1) * 50;
@@ -113,6 +129,7 @@ export default function ProfilePage() {
                     #{user.reputation.rank}
                   </span>
                 )}
+                <SovereignTierBadge identity={sovereignIdentity} size="sm" />
               </div>
               <p className="text-sm text-muted-foreground mb-4">
                 Member since {formatDate(user.createdAt)}
@@ -185,6 +202,56 @@ export default function ProfilePage() {
             <div className="text-sm text-muted-foreground">Best Streak</div>
           </div>
         </div>
+
+        {/* SOVEREIGN Identity */}
+        {sovereignIdentity && (
+          <div className="rounded-lg border bg-card p-6 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-semibold">SOVEREIGN Identity</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-xl font-bold text-primary">
+                  {sovereignIdentity.compositeScore.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground">Composite Score</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-xl font-bold">
+                  {sovereignIdentity.tradingScore.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground">Trading</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-xl font-bold text-green-500">
+                  {sovereignIdentity.civicScore.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground">Civic</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-xl font-bold">
+                  {sovereignIdentity.developerScore.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground">Developer</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-muted/50">
+                <div className="text-xl font-bold">
+                  {sovereignIdentity.infraScore.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground">Infra</div>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                Your civic participation on Komon contributes to your SOVEREIGN score
+              </span>
+              <span className="font-medium">
+                Stake Limit: {stakeLimit === Infinity ? "Unlimited" : `$${stakeLimit.toLocaleString()}`}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="border-b mb-6">
