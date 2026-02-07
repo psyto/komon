@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Shield,
   Wallet,
+  RefreshCw,
 } from "lucide-react";
 import { cn, formatCurrency, formatPercent, formatDate, truncateAddress } from "@/lib/utils";
 import { SovereignTierBadge } from "@/components/sovereign";
@@ -24,6 +25,8 @@ import {
   getStakeLimit,
   fetchSovereignIdentity,
   createSovereignIdentity,
+  syncToSovereign,
+  calculateCivicScore,
 } from "@/lib/solana/sovereign";
 
 // Mock user data - in production, fetch from Komon program
@@ -104,6 +107,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncSuccess, setSyncSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadIdentity() {
@@ -149,6 +155,51 @@ export default function ProfilePage() {
       setCreating(false);
     }
   };
+
+  const handleSyncToSovereign = async () => {
+    if (!publicKey || !sovereignIdentity) return;
+
+    setSyncing(true);
+    setSyncError(null);
+    setSyncSuccess(null);
+
+    try {
+      // Convert mock user reputation to the format expected by syncToSovereign
+      const reputation = {
+        winRate: user.reputation.winRate,
+        directionsWon: user.reputation.directionsWon,
+        directionsProposed: user.reputation.directionsProposed,
+        currentStreak: user.reputation.currentStreak,
+        level: user.reputation.level,
+      };
+
+      const result = await syncToSovereign(connection, wallet, reputation);
+      console.log("Synced to SOVEREIGN:", result);
+
+      // Refetch the identity to show updated score
+      const identity = await fetchSovereignIdentity(connection, publicKey);
+      setSovereignIdentity(identity);
+
+      const message = result.needsSetup
+        ? `Set up authority and synced! New civic score: ${result.newScore}`
+        : `Synced! New civic score: ${result.newScore}`;
+      setSyncSuccess(message);
+    } catch (error) {
+      console.error("Error syncing to SOVEREIGN:", error);
+      setSyncError(error instanceof Error ? error.message : "Failed to sync");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Calculate what the civic score would be if synced
+  const previewCivicScore = calculateCivicScore({
+    winRate: user.reputation.winRate,
+    directionsWon: user.reputation.directionsWon,
+    directionsProposed: user.reputation.directionsProposed,
+    currentStreak: user.reputation.currentStreak,
+    level: user.reputation.level,
+  });
 
   // Calculate level progress
   const currentLevelXp = user.reputation.level * (user.reputation.level + 1) * 50;
@@ -322,13 +373,57 @@ export default function ProfilePage() {
                   <div className="text-xs text-muted-foreground">Infra</div>
                 </div>
               </div>
-              <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  Your civic participation on Komon contributes to your SOVEREIGN score
-                </span>
-                <span className="font-medium">
-                  Stake Limit: {stakeLimit === Infinity ? "Unlimited" : `$${stakeLimit.toLocaleString()}`}
-                </span>
+              {/* Sync Section */}
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <span className="text-sm text-muted-foreground">
+                      Komon Civic Score Preview:{" "}
+                    </span>
+                    <span className="text-sm font-bold text-green-500">
+                      {previewCivicScore.toLocaleString()}
+                    </span>
+                    {previewCivicScore !== sovereignIdentity.civicScore && (
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (current: {sovereignIdentity.civicScore.toLocaleString()})
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium">
+                    Stake Limit: {stakeLimit === Infinity ? "Unlimited" : `$${stakeLimit.toLocaleString()}`}
+                  </span>
+                </div>
+
+                {syncError && (
+                  <p className="text-sm text-red-500 mb-3">{syncError}</p>
+                )}
+                {syncSuccess && (
+                  <p className="text-sm text-green-500 mb-3">{syncSuccess}</p>
+                )}
+
+                <button
+                  onClick={handleSyncToSovereign}
+                  disabled={syncing || previewCivicScore === sovereignIdentity.civicScore}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {syncing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4" />
+                      Sync to SOVEREIGN
+                    </>
+                  )}
+                </button>
+
+                {previewCivicScore === sovereignIdentity.civicScore && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Your SOVEREIGN civic score is already up to date.
+                  </p>
+                )}
               </div>
             </>
           ) : (
