@@ -19,7 +19,12 @@ import {
 } from "lucide-react";
 import { cn, formatCurrency, formatPercent, formatDate, truncateAddress } from "@/lib/utils";
 import { SovereignTierBadge } from "@/components/sovereign";
-import { SovereignIdentity, getStakeLimit, fetchSovereignIdentity } from "@/lib/solana/sovereign";
+import {
+  SovereignIdentity,
+  getStakeLimit,
+  fetchSovereignIdentity,
+  createSovereignIdentity,
+} from "@/lib/solana/sovereign";
 
 // Mock user data - in production, fetch from Komon program
 const mockUser = {
@@ -90,12 +95,15 @@ const mockStakes = [
 ];
 
 export default function ProfilePage() {
-  const { publicKey, connected } = useWallet();
+  const wallet = useWallet();
+  const { publicKey, connected } = wallet;
   const { connection } = useConnection();
   const [user] = useState(mockUser);
   const [activeTab, setActiveTab] = useState<"problems" | "stakes">("problems");
   const [sovereignIdentity, setSovereignIdentity] = useState<SovereignIdentity | null>(null);
   const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadIdentity() {
@@ -120,6 +128,27 @@ export default function ProfilePage() {
   }, [publicKey, connection]);
 
   const stakeLimit = getStakeLimit(sovereignIdentity?.tier ?? 0);
+
+  const handleCreateIdentity = async () => {
+    if (!publicKey) return;
+
+    setCreating(true);
+    setCreateError(null);
+
+    try {
+      const txId = await createSovereignIdentity(connection, wallet);
+      console.log("SOVEREIGN identity created:", txId);
+
+      // Refetch the identity
+      const identity = await fetchSovereignIdentity(connection, publicKey);
+      setSovereignIdentity(identity);
+    } catch (error) {
+      console.error("Error creating SOVEREIGN identity:", error);
+      setCreateError(error instanceof Error ? error.message : "Failed to create identity");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   // Calculate level progress
   const currentLevelXp = user.reputation.level * (user.reputation.level + 1) * 50;
@@ -307,9 +336,29 @@ export default function ProfilePage() {
               <p className="text-muted-foreground mb-4">
                 No SOVEREIGN identity found for this wallet.
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-6">
                 Create a SOVEREIGN identity to unlock tier-based benefits across the ecosystem.
               </p>
+              {createError && (
+                <p className="text-sm text-red-500 mb-4">{createError}</p>
+              )}
+              <button
+                onClick={handleCreateIdentity}
+                disabled={creating}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground px-6 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {creating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="h-4 w-4" />
+                    Create SOVEREIGN Identity
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>
