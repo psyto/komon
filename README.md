@@ -63,6 +63,7 @@ Shared problems deserve shared solutions.
 ┌─────────────────────────────────────────────────────────────────┐
 │                         FRONTEND                                 │
 │  Next.js 15 + React 19 + TypeScript + Tailwind                  │
+│  Solana Wallet Adapter (Phantom, Solflare)                      │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -95,6 +96,15 @@ Shared problems deserve shared solutions.
 ```
 
 Web3 is invisible to users—they see USD while the backend handles USDC on Solana.
+
+---
+
+## Deployments
+
+| Network | Program | ID |
+|---------|---------|-----|
+| Devnet | Reputation | `AWDeGkLSX3HcU2s8vhYThxLeDQ4N9DqhnREuZU36vuJU` |
+| Devnet | SOVEREIGN | `2UAZc1jj4QTSkgrC8U9d4a7EM9AQunxMvW5g7rX7Af9T` |
 
 ---
 
@@ -148,6 +158,38 @@ await reputationProgram.methods
 
 ---
 
+## Wallet Connection
+
+Komon integrates Solana wallet adapters for seamless Web3 experience:
+
+- **Supported Wallets**: Phantom, Solflare
+- **Network**: Devnet (mainnet coming soon)
+- **Features**:
+  - Connect wallet from navigation bar
+  - View SOVEREIGN identity and tier badge
+  - Tier-based stake limits enforced on-chain
+  - Real-time SOVEREIGN score display on profile
+
+### Frontend Components
+
+```typescript
+// SOVEREIGN tier badge in navigation
+<SovereignNavBadge identity={sovereignIdentity} loading={loading} />
+
+// Full tier display with score breakdown
+<SovereignTierBadge identity={sovereignIdentity} showDetails size="lg" />
+
+// Stake dialog with tier-based limits
+<StakeDialog
+  open={open}
+  onOpenChange={setOpen}
+  directionId={id}
+  outcome="YES"
+/>
+```
+
+---
+
 ## Documentation
 
 | Document | Description |
@@ -180,8 +222,16 @@ komon/
 ├── app/                        # Next.js frontend
 │   ├── src/
 │   │   ├── app/               # Pages and API routes
-│   │   ├── components/        # React components
-│   │   └── lib/              # Utilities and helpers
+│   │   ├── components/
+│   │   │   ├── ui/            # UI components (navigation)
+│   │   │   ├── providers/     # Wallet & app providers
+│   │   │   ├── sovereign/     # SOVEREIGN tier components
+│   │   │   ├── problems/      # Problem-related components
+│   │   │   ├── directions/    # Direction components
+│   │   │   └── staking/       # Staking dialog & components
+│   │   └── lib/
+│   │       ├── utils/         # Utility functions
+│   │       └── solana/        # Solana/SOVEREIGN utilities
 │   └── prisma/               # Database schema
 ├── docs/                       # Documentation
 ├── tests/                     # Anchor tests
