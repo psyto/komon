@@ -1,0 +1,23 @@
+[package]
+name = "creator-framing"
+version = "0.1.0"
+description = "Creator Framing Layer - Vitalik's creator coin model with DAO voting and burn"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "creator"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = "0.30.0"
+subject-registry = { path = "../subject-registry", features = ["cpi"] }
+market-engine = { path = "../market-engine", features = ["cpi"] }
+reputation-core = { path = "../reputation-core", features = ["cpi"] }

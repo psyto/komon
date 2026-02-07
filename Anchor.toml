@@ -4,14 +4,35 @@ anchor_version = "0.30.0"
 [features]
 seeds = false
 skip-lint = false
+resolution = true
 
 [programs.devnet]
+# Core Programs
+subject_registry = "DSSJdN2LTG578pEFnJPr6HHP61jKhsKsmeE6ohdTQAPv"
+market_engine = "5tFcB5fM3f19PB2CCqjBKvaNFqXWKgNjMALWknG291Qq"
+reputation_core = "EWzQRuqkZSo3gmWnVpyob3c2bBRDpPusdL8oy3cpDHWU"
+
+# Framing Layers
+civic = "9kLcoQ1Kpr66pNHL3m9cfWhgXzCi5E9VzzW6TBA3fYu1"
+creator = "8iPZJoBCPGEALzyiUwMYc4FyKW8QbNnBNuhAjBSJvUno"
+
+# Legacy Programs
 problem_registry = "Fo1fm7iZpnpyCo8zbnnSN2g8zb6zFAips3hxk24NZETr"
 direction_market = "8yX75Q8Go26wGTmttuVQuzMvGFYa6mWPHtGXV8vHGZzt"
 treasury = "BYbmC2bdPSNELqpXqCXY9iKiDMf9hUWFdcExGiHUZSRZ"
 reputation = "AWDeGkLSX3HcU2s8vhYThxLeDQ4N9DqhnREuZU36vuJU"
 
 [programs.localnet]
+# Core Programs
+subject_registry = "DSSJdN2LTG578pEFnJPr6HHP61jKhsKsmeE6ohdTQAPv"
+market_engine = "5tFcB5fM3f19PB2CCqjBKvaNFqXWKgNjMALWknG291Qq"
+reputation_core = "EWzQRuqkZSo3gmWnVpyob3c2bBRDpPusdL8oy3cpDHWU"
+
+# Framing Layers
+civic = "9kLcoQ1Kpr66pNHL3m9cfWhgXzCi5E9VzzW6TBA3fYu1"
+creator = "8iPZJoBCPGEALzyiUwMYc4FyKW8QbNnBNuhAjBSJvUno"
+
+# Legacy Programs
 problem_registry = "Fo1fm7iZpnpyCo8zbnnSN2g8zb6zFAips3hxk24NZETr"
 direction_market = "8yX75Q8Go26wGTmttuVQuzMvGFYa6mWPHtGXV8vHGZzt"
 treasury = "BYbmC2bdPSNELqpXqCXY9iKiDMf9hUWFdcExGiHUZSRZ"

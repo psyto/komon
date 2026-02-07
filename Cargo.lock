@@ -729,6 +729,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "civic-framing"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "market-engine",
+ "reputation-core",
+ "subject-registry",
+]
+
+[[package]]
 name = "console_error_panic_hook"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -761,6 +771,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "creator-framing"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "market-engine",
+ "reputation-core",
+ "subject-registry",
 ]
 
 [[package]]
@@ -1218,6 +1238,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "komon"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1303,6 +1330,14 @@ name = "log"
 version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
+
+[[package]]
+name = "market-engine"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
 
 [[package]]
 name = "memchr"
@@ -1701,6 +1736,13 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
+]
+
+[[package]]
+name = "reputation-core"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
 ]
 
 [[package]]
@@ -2321,6 +2363,14 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "subject-registry"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+]
 
 [[package]]
 name = "subtle"

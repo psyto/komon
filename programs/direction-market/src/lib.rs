@@ -96,12 +96,17 @@ pub mod direction_market {
         let tokens_to_mint = amount;
 
         // Mint outcome tokens to staker
-        let direction_key = direction.key();
+        // Extract values before building seeds to avoid borrow checker issues
+        let problem_key = direction.problem;
+        let direction_id = direction.id;
+        let direction_bump = direction.bump;
+        let id_bytes = direction_id.to_le_bytes();
+
         let seeds = &[
-            b"direction",
-            direction.problem.as_ref(),
-            direction.id.to_le_bytes().as_ref(),
-            &[direction.bump],
+            b"direction".as_ref(),
+            problem_key.as_ref(),
+            id_bytes.as_ref(),
+            &[direction_bump],
         ];
         let signer_seeds = &[&seeds[..]];
 
@@ -167,12 +172,17 @@ pub mod direction_market {
         let usdc_to_return = amount;
 
         // Burn outcome tokens
-        let direction_key = direction.key();
+        // Extract values before building seeds to avoid borrow checker issues
+        let problem_key = direction.problem;
+        let direction_id = direction.id;
+        let direction_bump = direction.bump;
+        let id_bytes = direction_id.to_le_bytes();
+
         let seeds = &[
-            b"direction",
-            direction.problem.as_ref(),
-            direction.id.to_le_bytes().as_ref(),
-            &[direction.bump],
+            b"direction".as_ref(),
+            problem_key.as_ref(),
+            id_bytes.as_ref(),
+            &[direction_bump],
         ];
         let signer_seeds = &[&seeds[..]];
 
@@ -285,13 +295,19 @@ pub mod direction_market {
             0
         };
 
+        // Extract values before building seeds to avoid borrow checker issues
+        let problem_key = direction.problem;
+        let direction_id = direction.id;
+        let direction_bump = direction.bump;
+        let id_bytes = direction_id.to_le_bytes();
+
         if payout > 0 {
             // Transfer USDC to winner
             let seeds = &[
-                b"direction",
-                direction.problem.as_ref(),
-                direction.id.to_le_bytes().as_ref(),
-                &[direction.bump],
+                b"direction".as_ref(),
+                problem_key.as_ref(),
+                id_bytes.as_ref(),
+                &[direction_bump],
             ];
             let signer_seeds = &[&seeds[..]];
 
