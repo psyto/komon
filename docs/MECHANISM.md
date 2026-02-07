@@ -214,6 +214,81 @@ Over time, we expect "civic analysts" to emerge—people who specialize in evalu
 
 ---
 
+## Dual-Mode Architecture: Civic + Creator
+
+The core mechanism generalizes beyond civic problems. We've implemented a **shared core with framing layers** that supports both civic problem-solving and creator curation.
+
+### The Insight
+
+Both systems share the same structure:
+1. **Subject** — Something to evaluate (Problem or Creator)
+2. **Market** — Predictions about outcomes (Direction works or Creator gets admitted)
+3. **Staking** — Skin in the game
+4. **Resolution** — Oracle determines truth
+5. **Payout** — Winners rewarded
+
+### Creator Mode (Vitalik Model)
+
+Based on [Vitalik Buterin's "How I would do creator coins"](https://vitalik.eth.limo/general/2025/01/23/creatorcoins.html):
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. CREATOR REGISTRATION                                         │
+│     Creator seeks admission to a quality-curating DAO            │
+│     Anyone can predict: "Will this DAO accept them?"             │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  2. PREDICTION MARKET                                            │
+│     Scouts stake on YES (DAO will accept) or NO (reject)         │
+│     Early correct predictions = higher rewards                   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  3. DAO VOTING                                                   │
+│     DAO members (max 200) vote on admission                      │
+│     Semi-anonymous voting with salt hashing                      │
+│     Quorum and threshold requirements                            │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  4. RESOLUTION + BURN                                            │
+│     DAO vote outcome settles all prediction markets              │
+│     5% of winnings burned (not in civic mode)                    │
+│     Scout reputation updated                                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Differences
+
+| Aspect | Civic Mode | Creator Mode |
+|--------|------------|--------------|
+| **Resolution** | Authority-based | DAO vote |
+| **Burn** | None | 5% of gross payout |
+| **Oracle** | Trusted party | Content creators themselves |
+| **Vocabulary** | Problem/Direction | Creator/Admission |
+| **Focus** | Local problems | Quality curation |
+
+### Why This Works for Creators
+
+Traditional creator coins fail because:
+- Speculation is recursive (coin value → attention → coin value)
+- No quality signal beyond market price
+- Vulnerable to pump-and-dump
+
+Komon's creator mode fixes this:
+- **DAOs are the oracle** — Real curators with taste decide, not attention metrics
+- **Scouts rewarded for judgment** — Find quality before mainstream, get rewarded
+- **Burn creates accountability** — Long-term alignment via deflationary pressure
+- **Opinionated DAOs** — Embrace niche curation, don't try to be universal
+
+> "The ultimate decider of who rises and falls is not speculators, but high-value content creators."
+
+---
+
 ## Open Questions
 
 **How do we verify outcomes?**

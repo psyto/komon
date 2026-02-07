@@ -157,6 +157,48 @@ The interface for communicating with the Solana blockchain. Komon uses RPC provi
 
 ---
 
+## Creator Mode (Vitalik Model)
+
+Komon implements a dual-mode architecture. In addition to civic problems, it supports creator curation based on [Vitalik Buterin's creator coin model](https://vitalik.eth.limo/general/2025/01/23/creatorcoins.html).
+
+### Creator
+A content creator seeking admission to a quality-curating DAO. In the shared core, this is called a "Subject" but framed as "Creator" in creator mode.
+
+### Creator DAO
+A non-token-based organization of content curators (max 200 members) who vote on which creators to admit. DAOs are opinionated and specialize by content type.
+
+### Content Type
+Category of creative work a DAO focuses on: LongFormWriting, ShortFormWriting, Music, ShortFormVideo, LongFormVideo, Fiction, Educational, Podcasts, Art, Code.
+
+### Scout
+A prediction market participant who identifies quality creators before mainstream recognition. Scouts stake on whether DAOs will accept creators.
+
+### Admission Prediction
+A prediction market on whether a DAO will accept a specific creator. Called "Market" in the shared core.
+
+### Nomination
+A DAO member's proposal to consider a creator for admission. Triggers a voting period.
+
+### DAO Vote
+The resolution mechanism for creator mode. Members vote Accept/Reject/Abstain with semi-anonymous salt-hashed votes. Requires quorum and threshold.
+
+### Quorum
+Minimum percentage of DAO members who must vote for the result to be valid (e.g., 50%).
+
+### Threshold
+Minimum approval rate required for admission (e.g., 66% of decisive votes).
+
+### Burn
+In creator mode, 5% of gross payout is burned (transferred to burn treasury). Creates deflationary pressure and long-term alignment.
+
+### DAO Membership
+On-chain record proving someone is an active member of a Creator DAO. Required to vote, nominate, or add new members.
+
+### Vote Record
+On-chain record preventing double voting. Stores keccak hash of voter+creator+salt for semi-anonymity.
+
+---
+
 ## Governance Terms
 
 ### Protocol
@@ -166,7 +208,7 @@ The complete system of rules, smart contracts, and interfaces that make up Komon
 A configurable value in the protocol: fee rates, stake limits, verification thresholds, etc. Parameters can be changed through governance.
 
 ### DAO (Decentralized Autonomous Organization)
-A governance structure where decisions are made by token or reputation-weighted voting rather than a central authority. Komon's eventual governance model.
+A governance structure where decisions are made by token or reputation-weighted voting rather than a central authority. Komon has two types: (1) Protocol Governance DAO for protocol decisions, and (2) Creator DAOs for content curation (see Creator Mode section).
 
 ### Multisig
 A wallet requiring multiple signatures to execute transactions. Used for emergency actions and treasury management. "3-of-5 multisig" means 3 of 5 designated signers must approve.

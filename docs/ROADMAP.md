@@ -23,9 +23,13 @@ Dates are directional. We'll move faster or slower based on what we learn.
 - [x] Prisma schema defined
 - [x] AI analysis integration (Claude)
 - [x] Documentation (Philosophy, Mechanism, Economics, etc.)
+- [x] **Dual-mode architecture** (shared core + civic/creator framing layers)
+- [x] **Creator mode implementation** (Vitalik's creator coin model)
+- [x] Core programs: SubjectRegistry, MarketEngine, ReputationCore
+- [x] Framing layers: Civic (Problem/Direction), Creator (DAO voting + burn)
 
 ### Status
-Code exists. Solana programs await toolchain update for compilation. Frontend runs with mock data.
+Code exists. All programs compile successfully. Dual-mode architecture supports both civic problem-solving and creator curation. Frontend runs with mock data.
 
 ---
 
@@ -260,6 +264,15 @@ Ideas we like but aren't prioritizing yet:
 | Hardware oracle integration | IoT complexity |
 | Prediction markets on policy | Regulatory considerations |
 | Anonymous participation | Identity needed for reputation |
+| ~~Creator coin model~~ | ~~Completed: Vitalik model implemented~~ |
+
+### Recently Implemented (Moved from Parking Lot)
+
+| Feature | Status |
+|---------|--------|
+| Creator mode (Vitalik model) | Implemented - DAO voting, burn mechanism, scout predictions |
+| Shared core architecture | Implemented - SubjectRegistry, MarketEngine, ReputationCore |
+| Dual framing layers | Implemented - Civic + Creator modes share same core |
 
 ---
 

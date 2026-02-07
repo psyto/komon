@@ -59,6 +59,8 @@ Shared problems deserve shared solutions.
 
 ## Architecture
 
+Komon uses a **shared core with dual framing layers** architecture. The same prediction market mechanics power both civic problem-solving and creator curation.
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                         FRONTEND                                 │
@@ -74,11 +76,22 @@ Shared problems deserve shared solutions.
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      SOLANA PROGRAMS                             │
-│  - ProblemRegistry: Post problems with evidence                  │
-│  - DirectionMarket: Binary outcome markets per solution          │
+│                     FRAMING LAYERS                               │
+│  ┌─────────────────────┐     ┌─────────────────────┐            │
+│  │   CIVIC FRAMING     │     │  CREATOR FRAMING    │            │
+│  │  Problem/Direction  │     │   Creator/DAO       │            │
+│  │  Authority resolve  │     │   DAO vote resolve  │            │
+│  │  No burn            │     │   5% burn on claim  │            │
+│  └─────────────────────┘     └─────────────────────┘            │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     SHARED CORE PROGRAMS                         │
+│  - SubjectRegistry: Generic subject management                   │
+│  - MarketEngine: Prediction markets with optional burn           │
+│  - ReputationCore: Multi-mode reputation tracking                │
 │  - Treasury: Pool for rewards + fee distribution                 │
-│  - Reputation: Track record + SOVEREIGN integration              │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -97,13 +110,41 @@ Shared problems deserve shared solutions.
 
 Web3 is invisible to users—they see USD while the backend handles USDC on Solana.
 
+### Dual-Mode Design
+
+The shared core implements Vitalik Buterin's ["How I would do creator coins"](https://vitalik.eth.limo/general/2025/01/23/creatorcoins.html) model alongside the original civic prediction market:
+
+| Aspect | Civic Mode | Creator Mode |
+|--------|------------|--------------|
+| Subject | Problem | Creator seeking DAO admission |
+| Market | Direction (solution) | Admission prediction |
+| Resolution | Authority-based | DAO vote |
+| Burn | Disabled | 5% of winnings |
+| Outcome | Solution works/fails | Creator accepted/rejected |
+
 ---
 
 ## Deployments
 
+### Core Programs
+
 | Network | Program | ID |
 |---------|---------|-----|
-| Devnet | Reputation | `AWDeGkLSX3HcU2s8vhYThxLeDQ4N9DqhnREuZU36vuJU` |
+| Devnet | SubjectRegistry | `DSSJdN2LTG578pEFnJPr6HHP61jKhsKsmeE6ohdTQAPv` |
+| Devnet | MarketEngine | `5tFcB5fM3f19PB2CCqjBKvaNFqXWKgNjMALWknG291Qq` |
+| Devnet | ReputationCore | `EWzQRuqkZSo3gmWnVpyob3c2bBRDpPusdL8oy3cpDHWU` |
+
+### Framing Layers
+
+| Network | Program | ID |
+|---------|---------|-----|
+| Devnet | Civic | `9kLcoQ1Kpr66pNHL3m9cfWhgXzCi5E9VzzW6TBA3fYu1` |
+| Devnet | Creator | `8iPZJoBCPGEALzyiUwMYc4FyKW8QbNnBNuhAjBSJvUno` |
+
+### External
+
+| Network | Program | ID |
+|---------|---------|-----|
 | Devnet | SOVEREIGN | `2UAZc1jj4QTSkgrC8U9d4a7EM9AQunxMvW5g7rX7Af9T` |
 
 ---
@@ -175,6 +216,37 @@ const result = await syncToSovereign(connection, wallet, reputation);
 
 ---
 
+## Creator Mode (Vitalik Model)
+
+Komon implements Vitalik Buterin's ["How I would do creator coins"](https://vitalik.eth.limo/general/2025/01/23/creatorcoins.html) proposal alongside civic prediction markets.
+
+### How It Works
+
+1. **Opinionated DAOs** - Small (max 200 members), non-token-based groups that curate creators by content type
+2. **Admission Predictions** - Scouts predict which creators high-quality DAOs will accept
+3. **DAO Voting** - Members vote on creator admission (semi-anonymous with salt hashing)
+4. **Resolution** - DAO vote outcome settles all prediction markets for that creator
+5. **Burn Mechanism** - 5% of winnings burned, creating deflationary pressure
+
+### Key Insight
+
+> "The ultimate decider of who rises and falls is not speculators, but high-value content creators."
+> — Vitalik Buterin
+
+Unlike traditional creator coins (recursive speculation), this model:
+- Makes **DAOs** the oracle, not attention metrics
+- Rewards **scouts** who identify quality before mainstream recognition
+- Uses **burn** to ensure long-term alignment
+
+### Content Types
+
+DAOs specialize by content type:
+- LongFormWriting (essays, newsletters)
+- ShortFormVideo (TikTok, Reels)
+- Music, Podcasts, Art, Code, etc.
+
+---
+
 ## Wallet Connection
 
 Komon integrates Solana wallet adapters for seamless Web3 experience:
@@ -234,14 +306,16 @@ Komon integrates Solana wallet adapters for seamless Web3 experience:
 
 ```
 komon/
-├── programs/                    # Anchor/Solana programs
-│   ├── problem-registry/        # Problem management
-│   ├── direction-market/        # Prediction markets
+├── programs/
+│   ├── subject-registry/       # Core: Generic subject management
+│   ├── market-engine/          # Core: Prediction markets + burn
+│   ├── reputation-core/        # Core: Multi-mode reputation
+│   ├── civic/                  # Framing: Problem/Direction vocabulary
+│   ├── creator/                # Framing: Creator DAO + admission
+│   ├── problem-registry/       # Legacy: Problem management
+│   ├── direction-market/       # Legacy: Direction markets
 │   ├── treasury/               # Fund management
-│   └── reputation/             # Soulbound reputation
-│       └── src/
-│           ├── lib.rs          # Main program
-│           └── sovereign/      # SOVEREIGN integration
+│   └── reputation/             # Legacy: SOVEREIGN integration
 ├── app/                        # Next.js frontend
 │   ├── src/
 │   │   ├── app/               # Pages and API routes
