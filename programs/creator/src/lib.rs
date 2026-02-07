@@ -1,4 +1,12 @@
 use anchor_lang::prelude::*;
+use subject_registry::cpi::accounts::RegisterSubject;
+use subject_registry::cpi::register_subject;
+use subject_registry::program::SubjectRegistry;
+use subject_registry::{Subject, SubjectMetadata};
+use market_engine::cpi::accounts::{CreateMarket, SettleMarket};
+use market_engine::cpi::{create_market, settle_market};
+use market_engine::program::MarketEngine;
+use market_engine::{Market, Outcome};
 
 declare_id!("8iPZJoBCPGEALzyiUwMYc4FyKW8QbNnBNuhAjBSJvUno");
 
@@ -19,7 +27,7 @@ declare_id!("8iPZJoBCPGEALzyiUwMYc4FyKW8QbNnBNuhAjBSJvUno");
 // 1. Type aliases for creator terminology
 // 2. Content type enums (writing, music, video...)
 // 3. DAO vote-based resolution (not authority)
-// 4. Burn mechanism on claim
+// 4. Burn mechanism on claim (via market-engine)
 // 5. Scout reputation tracking
 // =============================================================================
 
@@ -32,9 +40,9 @@ pub mod creator {
     // =========================================================================
     // Vitalik: "anyone can become a creator and create a creator coin"
 
-    /// Register a creator seeking DAO admission
+    /// Register a creator seeking DAO admission (CPI to subject_registry)
     pub fn register_creator(
-        ctx: Context<CreatorAction>,
+        ctx: Context<RegisterCreator>,
         name: String,
         bio: String,
         content_type: ContentType,
@@ -43,11 +51,13 @@ pub mod creator {
         deadline: i64,
     ) -> Result<()> {
         // Build metadata for creator context
-        let _metadata = CreatorMetadata {
-            content_type,
-            style_tag: string_to_bytes32(&style_tag),
-            target_dao,
-            region_code: 0,
+        // context_a/b store DAO reference parts, category = content_type
+        let metadata = SubjectMetadata {
+            context_a: 0, // Reserved
+            context_b: 0, // Reserved
+            category: content_type as u8,
+            flags: 0,
+            reference: Some(target_dao),
         };
 
         msg!(
@@ -56,14 +66,24 @@ pub mod creator {
             content_type
         );
 
+        // CPI to subject_registry::register_subject
+        let cpi_program = ctx.accounts.subject_registry_program.to_account_info();
+        let cpi_accounts = RegisterSubject {
+            config: ctx.accounts.subject_config.to_account_info(),
+            subject: ctx.accounts.creator_subject.to_account_info(),
+            registrar: ctx.accounts.user.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        register_subject(cpi_ctx, name.clone(), bio, metadata, deadline)?;
+
         emit!(CreatorRegistered {
-            name: name.clone(),
+            name,
             content_type,
             target_dao,
             deadline,
         });
-
-        // Note: CPIs to subject_registry::register_subject with mode = Creator
 
         Ok(())
     }
@@ -74,57 +94,46 @@ pub mod creator {
     // Vitalik: "speculators are specifically being predictors of what new
     // creators the high-value creator DAOs will be willing to accept"
 
-    /// Create an admission prediction market
+    /// Create an admission prediction market (CPI to market_engine)
     pub fn create_prediction(
-        ctx: Context<CreatorAction>,
-        creator_subject: Pubkey,
+        ctx: Context<CreatePrediction>,
         thesis: String,
         analysis: String,
     ) -> Result<()> {
+        let creator_subject = ctx.accounts.creator_subject.key();
+
         msg!(
             "Creating admission prediction for creator {}",
             creator_subject
         );
 
+        // CPI to market_engine::create_market
+        let cpi_program = ctx.accounts.market_engine_program.to_account_info();
+        let cpi_accounts = CreateMarket {
+            config: ctx.accounts.market_config.to_account_info(),
+            subject: ctx.accounts.creator_subject.to_account_info(),
+            market: ctx.accounts.prediction_market.to_account_info(),
+            yes_mint: ctx.accounts.yes_mint.to_account_info(),
+            no_mint: ctx.accounts.no_mint.to_account_info(),
+            creator: ctx.accounts.scout.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        create_market(cpi_ctx, thesis.clone(), analysis)?;
+
         emit!(PredictionCreated {
             creator: creator_subject,
-            scout: ctx.accounts.user.key(),
-            thesis: thesis.clone(),
+            scout: ctx.accounts.scout.key(),
+            thesis,
         });
-
-        // Note: CPIs to market_engine::create_market
-
-        Ok(())
-    }
-
-    /// Stake on admission prediction
-    pub fn stake_on_admission(
-        ctx: Context<CreatorAction>,
-        market: Pubkey,
-        amount: u64,
-        prediction: AdmissionOutcome,
-    ) -> Result<()> {
-        msg!(
-            "Staking {} on {:?} for market {}",
-            amount,
-            prediction,
-            market
-        );
-
-        emit!(PredictionStaked {
-            market,
-            staker: ctx.accounts.user.key(),
-            amount,
-            predicts_acceptance: matches!(prediction, AdmissionOutcome::Accepted),
-        });
-
-        // Note: CPIs to market_engine::stake with outcome mapping
 
         Ok(())
     }
 
     // =========================================================================
-    // DAO Voting
+    // DAO Management
     // =========================================================================
     // Vitalik: "there are N members, and they can (anonymously) vote new
     // members in and out"
@@ -140,6 +149,8 @@ pub mod creator {
         quorum: u8,
     ) -> Result<()> {
         let dao = &mut ctx.accounts.dao;
+        let founder_membership = &mut ctx.accounts.founder_membership;
+        let now = Clock::get()?.unix_timestamp;
 
         dao.name = string_to_bytes32(&name);
         dao.content_type = content_type;
@@ -148,8 +159,16 @@ pub mod creator {
         dao.member_count = 1; // Founder is first member
         dao.admission_threshold = admission_threshold;
         dao.quorum = quorum;
-        dao.created_at = Clock::get()?.unix_timestamp;
+        dao.created_at = now;
         dao.bump = ctx.bumps.dao;
+
+        // Initialize founder's membership
+        founder_membership.dao = dao.key();
+        founder_membership.member = ctx.accounts.founder.key();
+        founder_membership.added_by = ctx.accounts.founder.key();
+        founder_membership.joined_at = now;
+        founder_membership.is_active = true;
+        founder_membership.bump = ctx.bumps.founder_membership;
 
         emit!(DAOCreated {
             name: name.clone(),
@@ -170,29 +189,40 @@ pub mod creator {
     /// Vitalik: "If N gets above ~200, consider auto-splitting it"
     pub const MAX_DAO_MEMBERS: u16 = 200;
 
-    /// Add initial founder member
-    /// Vitalik: "Hand-pick the initial membership set"
-    pub fn add_founder_member(
+    /// Add a member to the DAO
+    /// During initial phase, only founder can add; later, members vote in new members
+    pub fn add_member(
         ctx: Context<AddMember>,
-        member: Pubkey,
+        new_member: Pubkey,
     ) -> Result<()> {
         let dao = &mut ctx.accounts.dao;
+        let membership = &mut ctx.accounts.membership;
 
+        // Verify caller is a member
         require!(
-            dao.founder == ctx.accounts.founder.key(),
-            ErrorCode::NotFounder
+            ctx.accounts.caller_membership.dao == dao.key() && ctx.accounts.caller_membership.is_active,
+            ErrorCode::NotAMember
         );
+
         require!(
             dao.member_count < MAX_DAO_MEMBERS,
             ErrorCode::DAOFull
         );
 
+        // Initialize new membership
+        membership.dao = dao.key();
+        membership.member = new_member;
+        membership.added_by = ctx.accounts.caller.key();
+        membership.joined_at = Clock::get()?.unix_timestamp;
+        membership.is_active = true;
+        membership.bump = ctx.bumps.membership;
+
         dao.member_count += 1;
 
         emit!(MemberAdded {
             dao: dao.key(),
-            member,
-            by_founder: true,
+            member: new_member,
+            added_by: ctx.accounts.caller.key(),
         });
 
         if dao.member_count >= MAX_DAO_MEMBERS {
@@ -202,15 +232,68 @@ pub mod creator {
         Ok(())
     }
 
+    /// Create a nomination for a creator to join the DAO
+    pub fn create_nomination(
+        ctx: Context<CreateNomination>,
+        creator: Pubkey,
+        voting_period_seconds: i64,
+    ) -> Result<()> {
+        let nomination = &mut ctx.accounts.nomination;
+        let dao = &ctx.accounts.dao;
+        let now = Clock::get()?.unix_timestamp;
+
+        // Verify nominator is a member
+        require!(
+            ctx.accounts.nominator_membership.dao == dao.key() && ctx.accounts.nominator_membership.is_active,
+            ErrorCode::NotAMember
+        );
+
+        nomination.dao = dao.key();
+        nomination.creator = creator;
+        nomination.nominator = ctx.accounts.nominator.key();
+        nomination.votes_accept = 0;
+        nomination.votes_reject = 0;
+        nomination.votes_abstain = 0;
+        nomination.created_at = now;
+        nomination.voting_ends_at = now + voting_period_seconds;
+        nomination.is_resolved = false;
+        nomination.was_accepted = false;
+        nomination.resolved_at = None;
+        nomination.bump = ctx.bumps.nomination;
+
+        emit!(NominationCreated {
+            dao: dao.key(),
+            creator,
+            nominator: ctx.accounts.nominator.key(),
+            voting_ends_at: nomination.voting_ends_at,
+        });
+
+        Ok(())
+    }
+
     /// Cast vote on creator admission
     /// Vitalik: "(anonymously) vote new members in and out"
-    pub fn cast_admission_vote(
+    pub fn cast_vote(
         ctx: Context<CastVote>,
-        creator: Pubkey,
         vote: VoteChoice,
         salt: [u8; 32], // For vote privacy
     ) -> Result<()> {
         let nomination = &mut ctx.accounts.nomination;
+        let vote_record = &mut ctx.accounts.vote_record;
+        let now = Clock::get()?.unix_timestamp;
+
+        // Verify voting is still open
+        require!(now < nomination.voting_ends_at, ErrorCode::VotingEnded);
+        require!(!nomination.is_resolved, ErrorCode::AlreadyResolved);
+
+        // Verify voter is a member
+        require!(
+            ctx.accounts.voter_membership.dao == nomination.dao && ctx.accounts.voter_membership.is_active,
+            ErrorCode::NotAMember
+        );
+
+        // Verify hasn't voted already
+        require!(!vote_record.has_voted, ErrorCode::AlreadyVoted);
 
         match vote {
             VoteChoice::Accept => nomination.votes_accept += 1,
@@ -218,17 +301,20 @@ pub mod creator {
             VoteChoice::Abstain => nomination.votes_abstain += 1,
         }
 
-        // Create vote hash for semi-anonymity
-        let _voter_hash = anchor_lang::solana_program::keccak::hashv(&[
+        // Record vote (hashed for semi-anonymity)
+        vote_record.nomination = nomination.key();
+        vote_record.voter_hash = anchor_lang::solana_program::keccak::hashv(&[
             ctx.accounts.voter.key().as_ref(),
-            creator.as_ref(),
+            nomination.creator.as_ref(),
             &salt,
-        ]);
+        ]).0;
+        vote_record.has_voted = true;
+        vote_record.bump = ctx.bumps.vote_record;
 
         emit!(VoteCast {
             nomination: nomination.key(),
-            // Note: not emitting voter for privacy
             vote,
+            // Note: voter not included for privacy
         });
 
         Ok(())
@@ -240,6 +326,10 @@ pub mod creator {
     pub fn resolve_admission(ctx: Context<ResolveAdmission>) -> Result<()> {
         let nomination = &mut ctx.accounts.nomination;
         let dao = &ctx.accounts.dao;
+        let now = Clock::get()?.unix_timestamp;
+
+        require!(!nomination.is_resolved, ErrorCode::AlreadyResolved);
+        require!(now >= nomination.voting_ends_at, ErrorCode::VotingNotEnded);
 
         // Check quorum
         let total_votes = nomination.votes_accept + nomination.votes_reject + nomination.votes_abstain;
@@ -258,7 +348,20 @@ pub mod creator {
 
         nomination.is_resolved = true;
         nomination.was_accepted = accepted;
-        nomination.resolved_at = Some(Clock::get()?.unix_timestamp);
+        nomination.resolved_at = Some(now);
+
+        // CPI to market_engine::settle_market with outcome based on `accepted`
+        let outcome = if accepted { Outcome::Yes } else { Outcome::No };
+
+        let cpi_program = ctx.accounts.market_engine_program.to_account_info();
+        let cpi_accounts = SettleMarket {
+            config: ctx.accounts.market_config.to_account_info(),
+            market: ctx.accounts.prediction_market.to_account_info(),
+            authority: ctx.accounts.resolver.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        settle_market(cpi_ctx, outcome)?;
 
         emit!(AdmissionResolved {
             nomination: nomination.key(),
@@ -267,8 +370,6 @@ pub mod creator {
             approval_rate: approval_rate as u16,
         });
 
-        // This resolution becomes the oracle for prediction markets
-        // CPIs to market_engine::settle_market with outcome based on `accepted`
         msg!(
             "Admission resolved: {} ({}% approval)",
             if accepted { "ACCEPTED" } else { "REJECTED" },
@@ -288,14 +389,6 @@ pub type Creator = Subject;
 
 /// An admission prediction market (alias for Market)
 pub type AdmissionPrediction = Market;
-
-/// Creator/scout reputation (alias for Reputation)
-pub type CreatorReputation = Reputation;
-
-// Stub types (imported from core in practice)
-pub struct Subject;
-pub struct Market;
-pub struct Reputation;
 
 // ============================================================================
 // Creator-Specific Enums
@@ -335,25 +428,62 @@ pub enum VoteChoice {
 }
 
 // ============================================================================
-// Creator Metadata
-// ============================================================================
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct CreatorMetadata {
-    pub content_type: ContentType,
-    pub style_tag: [u8; 32],
-    pub target_dao: Pubkey,
-    pub region_code: u16,
-}
-
-// ============================================================================
 // Accounts
 // ============================================================================
 
 #[derive(Accounts)]
-pub struct CreatorAction<'info> {
+#[instruction(name: String, bio: String)]
+pub struct RegisterCreator<'info> {
+    /// Subject registry config
+    /// CHECK: Validated by subject_registry program
+    #[account(mut)]
+    pub subject_config: UncheckedAccount<'info>,
+
+    /// The creator subject account to create
+    /// CHECK: Created by subject_registry via CPI
+    #[account(mut)]
+    pub creator_subject: UncheckedAccount<'info>,
+
     #[account(mut)]
     pub user: Signer<'info>,
+
+    pub subject_registry_program: Program<'info, SubjectRegistry>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CreatePrediction<'info> {
+    /// Market engine config
+    /// CHECK: Validated by market_engine program
+    #[account(mut)]
+    pub market_config: UncheckedAccount<'info>,
+
+    /// The creator this prediction is about
+    /// CHECK: Validated by market_engine program
+    pub creator_subject: UncheckedAccount<'info>,
+
+    /// The prediction market account
+    /// CHECK: Created by market_engine via CPI
+    #[account(mut)]
+    pub prediction_market: UncheckedAccount<'info>,
+
+    /// YES token mint (creator accepted)
+    /// CHECK: Created by market_engine via CPI
+    #[account(mut)]
+    pub yes_mint: UncheckedAccount<'info>,
+
+    /// NO token mint (creator rejected)
+    /// CHECK: Created by market_engine via CPI
+    #[account(mut)]
+    pub no_mint: UncheckedAccount<'info>,
+
+    /// The scout creating the prediction
+    #[account(mut)]
+    pub scout: Signer<'info>,
+
+    pub market_engine_program: Program<'info, MarketEngine>,
+    /// CHECK: Token program
+    pub token_program: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -368,6 +498,16 @@ pub struct CreateDAO<'info> {
     )]
     pub dao: Account<'info, CreatorDAO>,
 
+    /// Founder's membership record
+    #[account(
+        init,
+        payer = founder,
+        space = 8 + DAOMembership::INIT_SPACE,
+        seeds = [b"membership", dao.key().as_ref(), founder.key().as_ref()],
+        bump
+    )]
+    pub founder_membership: Account<'info, DAOMembership>,
+
     #[account(mut)]
     pub founder: Signer<'info>,
 
@@ -379,7 +519,59 @@ pub struct AddMember<'info> {
     #[account(mut)]
     pub dao: Account<'info, CreatorDAO>,
 
-    pub founder: Signer<'info>,
+    /// Caller's membership (must be active member)
+    #[account(
+        seeds = [b"membership", dao.key().as_ref(), caller.key().as_ref()],
+        bump = caller_membership.bump
+    )]
+    pub caller_membership: Account<'info, DAOMembership>,
+
+    /// New member's membership record
+    #[account(
+        init,
+        payer = caller,
+        space = 8 + DAOMembership::INIT_SPACE,
+        seeds = [b"membership", dao.key().as_ref(), new_member.key().as_ref()],
+        bump
+    )]
+    pub membership: Account<'info, DAOMembership>,
+
+    /// CHECK: The new member's address
+    pub new_member: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    pub caller: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct CreateNomination<'info> {
+    pub dao: Account<'info, CreatorDAO>,
+
+    /// Nominator's membership (must be active member)
+    #[account(
+        seeds = [b"membership", dao.key().as_ref(), nominator.key().as_ref()],
+        bump = nominator_membership.bump
+    )]
+    pub nominator_membership: Account<'info, DAOMembership>,
+
+    #[account(
+        init,
+        payer = nominator,
+        space = 8 + Nomination::INIT_SPACE,
+        seeds = [b"nomination", dao.key().as_ref(), creator.key().as_ref()],
+        bump
+    )]
+    pub nomination: Account<'info, Nomination>,
+
+    /// CHECK: The creator being nominated
+    pub creator: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    pub nominator: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -387,7 +579,27 @@ pub struct CastVote<'info> {
     #[account(mut)]
     pub nomination: Account<'info, Nomination>,
 
+    /// Voter's membership (must be active member)
+    #[account(
+        seeds = [b"membership", nomination.dao.as_ref(), voter.key().as_ref()],
+        bump = voter_membership.bump
+    )]
+    pub voter_membership: Account<'info, DAOMembership>,
+
+    /// Vote record to prevent double voting
+    #[account(
+        init,
+        payer = voter,
+        space = 8 + VoteRecord::INIT_SPACE,
+        seeds = [b"vote", nomination.key().as_ref(), voter.key().as_ref()],
+        bump
+    )]
+    pub vote_record: Account<'info, VoteRecord>,
+
+    #[account(mut)]
     pub voter: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -397,7 +609,19 @@ pub struct ResolveAdmission<'info> {
 
     pub dao: Account<'info, CreatorDAO>,
 
+    /// Market engine config
+    /// CHECK: Validated by market_engine program
+    #[account(mut)]
+    pub market_config: UncheckedAccount<'info>,
+
+    /// The prediction market to settle
+    /// CHECK: Validated by market_engine program
+    #[account(mut)]
+    pub prediction_market: UncheckedAccount<'info>,
+
     pub resolver: Signer<'info>,
+
+    pub market_engine_program: Program<'info, MarketEngine>,
 }
 
 // ============================================================================
@@ -414,9 +638,21 @@ pub struct CreatorDAO {
     pub style_tag: [u8; 32],
     pub founder: Pubkey,
     pub member_count: u16,
-    pub admission_threshold: u8,  // % needed to admit
-    pub quorum: u8,               // % needed for valid vote
+    pub admission_threshold: u8,  // % needed to admit (e.g., 66 = 66%)
+    pub quorum: u8,               // % needed for valid vote (e.g., 50 = 50%)
     pub created_at: i64,
+    pub bump: u8,
+}
+
+/// DAO Membership record
+#[account]
+#[derive(InitSpace)]
+pub struct DAOMembership {
+    pub dao: Pubkey,
+    pub member: Pubkey,
+    pub added_by: Pubkey,
+    pub joined_at: i64,
+    pub is_active: bool,
     pub bump: u8,
 }
 
@@ -435,6 +671,16 @@ pub struct Nomination {
     pub is_resolved: bool,
     pub was_accepted: bool,
     pub resolved_at: Option<i64>,
+    pub bump: u8,
+}
+
+/// Vote record (prevents double voting, stores hash for privacy)
+#[account]
+#[derive(InitSpace)]
+pub struct VoteRecord {
+    pub nomination: Pubkey,
+    pub voter_hash: [u8; 32],
+    pub has_voted: bool,
     pub bump: u8,
 }
 
@@ -458,14 +704,6 @@ pub struct PredictionCreated {
 }
 
 #[event]
-pub struct PredictionStaked {
-    pub market: Pubkey,
-    pub staker: Pubkey,
-    pub amount: u64,
-    pub predicts_acceptance: bool,
-}
-
-#[event]
 pub struct DAOCreated {
     pub name: String,
     pub content_type: ContentType,
@@ -476,7 +714,15 @@ pub struct DAOCreated {
 pub struct MemberAdded {
     pub dao: Pubkey,
     pub member: Pubkey,
-    pub by_founder: bool,
+    pub added_by: Pubkey,
+}
+
+#[event]
+pub struct NominationCreated {
+    pub dao: Pubkey,
+    pub creator: Pubkey,
+    pub nominator: Pubkey,
+    pub voting_ends_at: i64,
 }
 
 #[event]
@@ -535,10 +781,18 @@ fn string_to_bytes32(s: &str) -> [u8; 32] {
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Only founder can add initial members")]
-    NotFounder,
+    #[msg("Not a member of the DAO")]
+    NotAMember,
     #[msg("DAO at maximum capacity, consider splitting")]
     DAOFull,
     #[msg("Quorum not reached")]
     QuorumNotReached,
+    #[msg("Voting period has ended")]
+    VotingEnded,
+    #[msg("Voting period has not ended yet")]
+    VotingNotEnded,
+    #[msg("Already voted on this nomination")]
+    AlreadyVoted,
+    #[msg("Nomination already resolved")]
+    AlreadyResolved,
 }

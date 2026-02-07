@@ -1,4 +1,12 @@
 use anchor_lang::prelude::*;
+use subject_registry::cpi::accounts::RegisterSubject;
+use subject_registry::cpi::register_subject;
+use subject_registry::program::SubjectRegistry;
+use subject_registry::{Config as SubjectConfig, Subject, SubjectMetadata, ProtocolMode};
+use market_engine::cpi::accounts::CreateMarket;
+use market_engine::cpi::create_market;
+use market_engine::program::MarketEngine;
+use market_engine::{MarketConfig, Market};
 
 declare_id!("9kLcoQ1Kpr66pNHL3m9cfWhgXzCi5E9VzzW6TBA3fYu1");
 
@@ -24,13 +32,9 @@ declare_id!("9kLcoQ1Kpr66pNHL3m9cfWhgXzCi5E9VzzW6TBA3fYu1");
 pub mod civic {
     use super::*;
 
-    // This program is mostly type definitions and helpers.
-    // Actual logic lives in the core programs.
-    // CPIs are made to core programs with civic-specific parameters.
-
-    /// Helper to create a civic problem (wraps subject_registry::register_subject)
+    /// Create a civic problem (CPI to subject_registry::register_subject)
     pub fn create_problem(
-        ctx: Context<CivicAction>,
+        ctx: Context<CreateProblem>,
         title: String,
         description: String,
         location_lat: i64,
@@ -56,33 +60,59 @@ pub mod civic {
             location_lng
         );
 
+        // CPI to subject_registry::register_subject
+        let cpi_program = ctx.accounts.subject_registry_program.to_account_info();
+        let cpi_accounts = RegisterSubject {
+            config: ctx.accounts.subject_config.to_account_info(),
+            subject: ctx.accounts.subject.to_account_info(),
+            registrar: ctx.accounts.user.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+        register_subject(cpi_ctx, title.clone(), description, metadata, deadline)?;
+
         emit!(ProblemCreated {
-            title: title.clone(),
+            title,
             category,
             location_lat,
             location_lng,
             deadline,
         });
 
-        // Note: In practice, this would CPI to subject_registry::register_subject
-        // with mode = ProtocolMode::Civic
-
         Ok(())
     }
 
-    /// Helper to propose a direction (wraps market_engine::create_market)
+    /// Propose a direction/solution (CPI to market_engine::create_market)
     pub fn propose_direction(
-        ctx: Context<CivicAction>,
+        ctx: Context<ProposeDirection>,
+        problem: Pubkey,
         description: String,
         ai_analysis: String,
     ) -> Result<()> {
         msg!("Proposing civic direction: {}", description);
 
-        emit!(DirectionProposed {
-            description: description.clone(),
-        });
+        // CPI to market_engine::create_market
+        let cpi_program = ctx.accounts.market_engine_program.to_account_info();
+        let cpi_accounts = CreateMarket {
+            config: ctx.accounts.market_config.to_account_info(),
+            subject: ctx.accounts.problem.to_account_info(),
+            market: ctx.accounts.direction.to_account_info(),
+            yes_mint: ctx.accounts.yes_mint.to_account_info(),
+            no_mint: ctx.accounts.no_mint.to_account_info(),
+            creator: ctx.accounts.user.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
 
-        // Note: In practice, CPIs to market_engine::create_market
+        create_market(cpi_ctx, description.clone(), ai_analysis)?;
+
+        emit!(DirectionProposed {
+            problem,
+            description,
+            proposer: ctx.accounts.user.key(),
+        });
 
         Ok(())
     }
@@ -97,9 +127,6 @@ pub type Problem = Subject;
 
 /// A proposed direction/solution (alias for Market in core)
 pub type Direction = Market;
-
-/// Civic reputation (alias for Reputation in core)
-pub type CivicReputation = Reputation;
 
 // ============================================================================
 // Civic-Specific Enums
@@ -147,59 +174,62 @@ pub enum DirectionOutcome {
     SolutionFails,
 }
 
-impl From<Outcome> for DirectionOutcome {
-    fn from(outcome: Outcome) -> Self {
-        match outcome {
-            Outcome::Yes => DirectionOutcome::SolutionWorks,
-            Outcome::No => DirectionOutcome::SolutionFails,
-        }
-    }
-}
-
-impl From<DirectionOutcome> for Outcome {
-    fn from(outcome: DirectionOutcome) -> Self {
-        match outcome {
-            DirectionOutcome::SolutionWorks => Outcome::Yes,
-            DirectionOutcome::SolutionFails => Outcome::No,
-        }
-    }
-}
-
 // ============================================================================
-// Re-exports from Core (for convenience)
-// ============================================================================
-
-// These would be imported from the core crates
-// For now, stub definitions
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct SubjectMetadata {
-    pub context_a: i64,
-    pub context_b: i64,
-    pub category: u8,
-    pub flags: u8,
-    pub reference: Option<Pubkey>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum Outcome {
-    Yes,
-    No,
-}
-
-// Stub types (would be imported from core)
-pub struct Subject;
-pub struct Market;
-pub struct Reputation;
-
-// ============================================================================
-// Accounts (thin wrappers)
+// Accounts
 // ============================================================================
 
 #[derive(Accounts)]
-pub struct CivicAction<'info> {
+#[instruction(title: String, description: String)]
+pub struct CreateProblem<'info> {
+    /// Subject registry config (for CPI)
+    /// CHECK: Validated by subject_registry program
+    #[account(mut)]
+    pub subject_config: UncheckedAccount<'info>,
+
+    /// The subject/problem account to create
+    /// CHECK: Created by subject_registry via CPI
+    #[account(mut)]
+    pub subject: UncheckedAccount<'info>,
+
     #[account(mut)]
     pub user: Signer<'info>,
+
+    pub subject_registry_program: Program<'info, SubjectRegistry>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ProposeDirection<'info> {
+    /// Market engine config (for CPI)
+    /// CHECK: Validated by market_engine program
+    #[account(mut)]
+    pub market_config: UncheckedAccount<'info>,
+
+    /// The problem this direction solves
+    /// CHECK: Validated by market_engine program
+    pub problem: UncheckedAccount<'info>,
+
+    /// The direction/market account to create
+    /// CHECK: Created by market_engine via CPI
+    #[account(mut)]
+    pub direction: UncheckedAccount<'info>,
+
+    /// YES outcome token mint
+    /// CHECK: Created by market_engine via CPI
+    #[account(mut)]
+    pub yes_mint: UncheckedAccount<'info>,
+
+    /// NO outcome token mint
+    /// CHECK: Created by market_engine via CPI
+    #[account(mut)]
+    pub no_mint: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
+
+    pub market_engine_program: Program<'info, MarketEngine>,
+    /// CHECK: Required for token operations
+    pub token_program: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -218,7 +248,9 @@ pub struct ProblemCreated {
 
 #[event]
 pub struct DirectionProposed {
+    pub problem: Pubkey,
     pub description: String,
+    pub proposer: Pubkey,
 }
 
 // ============================================================================
