@@ -141,19 +141,36 @@ Streak           ───┘
 
 ### Syncing Your Reputation
 
-Users can sync their Komon reputation to SOVEREIGN at any time:
+Users can sync their Komon reputation to SOVEREIGN directly from the profile page:
+
+1. Navigate to your profile page
+2. View your calculated civic score preview
+3. Click "Sync to SOVEREIGN" to update your on-chain identity
+
+The sync calculates your civic score using a weighted formula:
+
+| Metric | Weight | Description |
+|--------|--------|-------------|
+| Win Rate | 40% | Your prediction accuracy on directions |
+| Directions Won | 25% | Tier based on total successful predictions |
+| Level/Trust | 25% | Your Komon level as a trust proxy |
+| Current Streak | 10% | Bonus for consecutive wins |
 
 ```typescript
-// Sync Komon reputation to SOVEREIGN civic score
-await reputationProgram.methods
-  .syncToSovereign()
-  .accounts({
-    reputation: userReputation,
-    user: wallet.publicKey,
-    sovereignIdentity: sovereignPda,
-    sovereignProgram: SOVEREIGN_PROGRAM_ID,
-  })
-  .rpc();
+import { syncToSovereign, calculateCivicScore } from '@/lib/solana/sovereign';
+
+// Calculate what your score would be
+const previewScore = calculateCivicScore({
+  winRate: 77.8,
+  directionsWon: 28,
+  directionsProposed: 45,
+  currentStreak: 5,
+  level: 15,
+});
+
+// Sync to SOVEREIGN (sets authority if needed, then updates score)
+const result = await syncToSovereign(connection, wallet, reputation);
+// result: { txId: "...", newScore: 6850, needsSetup: false }
 ```
 
 ---
@@ -169,6 +186,7 @@ Komon integrates Solana wallet adapters for seamless Web3 experience:
   - View SOVEREIGN identity and tier badge
   - Tier-based stake limits enforced on-chain
   - Real-time SOVEREIGN score display on profile
+  - Sync Komon reputation to SOVEREIGN civic score
 
 ### Frontend Components
 
@@ -186,6 +204,11 @@ Komon integrates Solana wallet adapters for seamless Web3 experience:
   directionId={id}
   outcome="YES"
 />
+
+// Sync to SOVEREIGN button (in profile page)
+<button onClick={handleSyncToSovereign}>
+  Sync to SOVEREIGN
+</button>
 ```
 
 ---
