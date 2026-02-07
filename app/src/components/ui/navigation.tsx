@@ -1,23 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { cn } from "@/lib/utils";
 import { MapPin, Trophy, User, Plus, Home } from "lucide-react";
 import { SovereignNavBadge } from "@/components/sovereign";
-import { SovereignIdentity } from "@/lib/solana/sovereign";
-
-// Mock SOVEREIGN identity for demo - in production, fetch from chain
-const mockSovereignIdentity: SovereignIdentity | null = {
-  owner: null as any,
-  tradingScore: 2500,
-  civicScore: 6800,
-  developerScore: 1200,
-  infraScore: 800,
-  compositeScore: 3264,
-  tier: 2,
-};
+import { SovereignIdentity, fetchSovereignIdentity } from "@/lib/solana/sovereign";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -28,7 +19,32 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname();
-  const [sovereignIdentity] = useState<SovereignIdentity | null>(mockSovereignIdentity);
+  const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
+  const [sovereignIdentity, setSovereignIdentity] = useState<SovereignIdentity | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadIdentity() {
+      if (!publicKey) {
+        setSovereignIdentity(null);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const identity = await fetchSovereignIdentity(connection, publicKey);
+        setSovereignIdentity(identity);
+      } catch (error) {
+        console.error("Error fetching SOVEREIGN identity:", error);
+        setSovereignIdentity(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadIdentity();
+  }, [publicKey, connection]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -57,14 +73,17 @@ export function Navigation() {
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-3">
-          <SovereignNavBadge identity={sovereignIdentity} />
-          <Link
-            href="/problems/new"
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
-          >
-            <Plus className="h-4 w-4" />
-            Post Problem
-          </Link>
+          {connected && <SovereignNavBadge identity={sovereignIdentity} loading={loading} />}
+          <WalletMultiButton className="!bg-primary !text-primary-foreground !rounded-md !h-9 !text-sm !font-medium hover:!bg-primary/90" />
+          {connected && (
+            <Link
+              href="/problems/new"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2"
+            >
+              <Plus className="h-4 w-4" />
+              Post Problem
+            </Link>
+          )}
         </div>
       </div>
     </header>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   User,
   Trophy,
@@ -13,17 +15,16 @@ import {
   MessageSquare,
   ArrowRight,
   Shield,
+  Wallet,
 } from "lucide-react";
-import { cn, formatCurrency, formatPercent, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatPercent, formatDate, truncateAddress } from "@/lib/utils";
 import { SovereignTierBadge } from "@/components/sovereign";
-import { SovereignIdentity, getStakeLimit } from "@/lib/solana/sovereign";
+import { SovereignIdentity, getStakeLimit, fetchSovereignIdentity } from "@/lib/solana/sovereign";
 
-// Mock user data
+// Mock user data - in production, fetch from Komon program
 const mockUser = {
   id: "demo-user",
   displayName: "CivicChampion",
-  email: "user@example.com",
-  walletAddress: "AbC...XyZ",
   createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
   reputation: {
     problemsPosted: 12,
@@ -88,21 +89,36 @@ const mockStakes = [
   },
 ];
 
-// Mock SOVEREIGN identity - in production, this would be fetched from chain
-const mockSovereignIdentity: SovereignIdentity | null = {
-  owner: null as any, // Would be PublicKey in production
-  tradingScore: 2500,
-  civicScore: 6800,  // High civic score from Komon participation
-  developerScore: 1200,
-  infraScore: 800,
-  compositeScore: 3264, // Calculated composite
-  tier: 2, // Silver tier
-};
-
 export default function ProfilePage() {
+  const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
   const [user] = useState(mockUser);
   const [activeTab, setActiveTab] = useState<"problems" | "stakes">("problems");
-  const [sovereignIdentity] = useState<SovereignIdentity | null>(mockSovereignIdentity);
+  const [sovereignIdentity, setSovereignIdentity] = useState<SovereignIdentity | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadIdentity() {
+      if (!publicKey) {
+        setSovereignIdentity(null);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const identity = await fetchSovereignIdentity(connection, publicKey);
+        setSovereignIdentity(identity);
+      } catch (error) {
+        console.error("Error fetching SOVEREIGN identity:", error);
+        setSovereignIdentity(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadIdentity();
+  }, [publicKey, connection]);
+
   const stakeLimit = getStakeLimit(sovereignIdentity?.tier ?? 0);
 
   // Calculate level progress
@@ -110,6 +126,24 @@ export default function ProfilePage() {
   const nextLevelXp = (user.reputation.level + 1) * (user.reputation.level + 2) * 50;
   const xpProgress =
     ((Number(user.reputation.experience) - currentLevelXp) / (nextLevelXp - currentLevelXp)) * 100;
+
+  // Not connected state
+  if (!connected) {
+    return (
+      <div className="container py-16 px-4 md:px-6">
+        <div className="max-w-md mx-auto text-center">
+          <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Wallet className="h-10 w-10 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold mb-4">Connect Your Wallet</h1>
+          <p className="text-muted-foreground mb-8">
+            Connect your Solana wallet to view your profile, reputation, and SOVEREIGN identity.
+          </p>
+          <WalletMultiButton className="!bg-primary !text-primary-foreground !rounded-md !h-10 !text-sm !font-medium hover:!bg-primary/90 mx-auto" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 px-4 md:px-6">
@@ -122,17 +156,21 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold">{user.displayName}</h1>
+                <h1 className="text-2xl font-bold">
+                  {publicKey ? truncateAddress(publicKey.toBase58(), 6) : user.displayName}
+                </h1>
                 {user.reputation.rank && user.reputation.rank <= 10 && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                     <Trophy className="h-3 w-3" />
                     #{user.reputation.rank}
                   </span>
                 )}
-                <SovereignTierBadge identity={sovereignIdentity} size="sm" />
+                <SovereignTierBadge identity={sovereignIdentity} loading={loading} size="sm" />
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Member since {formatDate(user.createdAt)}
+                {publicKey && (
+                  <span className="font-mono text-xs">{publicKey.toBase58()}</span>
+                )}
               </p>
 
               {/* Level Progress */}
@@ -204,54 +242,77 @@ export default function ProfilePage() {
         </div>
 
         {/* SOVEREIGN Identity */}
-        {sovereignIdentity && (
-          <div className="rounded-lg border bg-card p-6 mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">SOVEREIGN Identity</h2>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold text-primary">
-                  {sovereignIdentity.compositeScore.toLocaleString()}
-                </div>
-                <div className="text-xs text-muted-foreground">Composite Score</div>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold">
-                  {sovereignIdentity.tradingScore.toLocaleString()}
-                </div>
-                <div className="text-xs text-muted-foreground">Trading</div>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold text-green-500">
-                  {sovereignIdentity.civicScore.toLocaleString()}
-                </div>
-                <div className="text-xs text-muted-foreground">Civic</div>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold">
-                  {sovereignIdentity.developerScore.toLocaleString()}
-                </div>
-                <div className="text-xs text-muted-foreground">Developer</div>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold">
-                  {sovereignIdentity.infraScore.toLocaleString()}
-                </div>
-                <div className="text-xs text-muted-foreground">Infra</div>
-              </div>
-            </div>
-            <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                Your civic participation on Komon contributes to your SOVEREIGN score
-              </span>
-              <span className="font-medium">
-                Stake Limit: {stakeLimit === Infinity ? "Unlimited" : `$${stakeLimit.toLocaleString()}`}
-              </span>
-            </div>
+        <div className="rounded-lg border bg-card p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">SOVEREIGN Identity</h2>
           </div>
-        )}
+
+          {loading ? (
+            <div className="animate-pulse">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="text-center p-3 rounded-lg bg-muted/50">
+                    <div className="h-6 bg-muted rounded w-16 mx-auto mb-1" />
+                    <div className="h-3 bg-muted rounded w-12 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : sovereignIdentity ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-xl font-bold text-primary">
+                    {sovereignIdentity.compositeScore.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Composite Score</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-xl font-bold">
+                    {sovereignIdentity.tradingScore.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Trading</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-xl font-bold text-green-500">
+                    {sovereignIdentity.civicScore.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Civic</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-xl font-bold">
+                    {sovereignIdentity.developerScore.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Developer</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-muted/50">
+                  <div className="text-xl font-bold">
+                    {sovereignIdentity.infraScore.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Infra</div>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Your civic participation on Komon contributes to your SOVEREIGN score
+                </span>
+                <span className="font-medium">
+                  Stake Limit: {stakeLimit === Infinity ? "Unlimited" : `$${stakeLimit.toLocaleString()}`}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground mb-4">
+                No SOVEREIGN identity found for this wallet.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Create a SOVEREIGN identity to unlock tier-based benefits across the ecosystem.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Tabs */}
         <div className="border-b mb-6">

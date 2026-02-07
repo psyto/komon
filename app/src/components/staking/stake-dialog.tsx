@@ -1,38 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { X, DollarSign, AlertCircle, Shield } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
-import { SovereignIdentity, getStakeLimit, getTierName } from "@/lib/solana/sovereign";
+import {
+  SovereignIdentity,
+  getStakeLimit,
+  getTierName,
+  fetchSovereignIdentity,
+} from "@/lib/solana/sovereign";
 
 interface StakeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   directionId: string | null;
   outcome: "YES" | "NO" | null;
-  sovereignIdentity?: SovereignIdentity | null;
 }
-
-// Mock SOVEREIGN identity for demo
-const mockSovereignIdentity: SovereignIdentity | null = {
-  owner: null as any,
-  tradingScore: 2500,
-  civicScore: 6800,
-  developerScore: 1200,
-  infraScore: 800,
-  compositeScore: 3264,
-  tier: 2,
-};
 
 export function StakeDialog({
   open,
   onOpenChange,
   directionId,
   outcome,
-  sovereignIdentity = mockSovereignIdentity,
 }: StakeDialogProps) {
+  const { publicKey } = useWallet();
+  const { connection } = useConnection();
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sovereignIdentity, setSovereignIdentity] = useState<SovereignIdentity | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadIdentity() {
+      if (!publicKey || !open) {
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const identity = await fetchSovereignIdentity(connection, publicKey);
+        setSovereignIdentity(identity);
+      } catch (error) {
+        console.error("Error fetching SOVEREIGN identity:", error);
+        setSovereignIdentity(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadIdentity();
+  }, [publicKey, connection, open]);
 
   const tier = sovereignIdentity?.tier ?? 0;
   const stakeLimit = getStakeLimit(tier);
@@ -138,10 +156,14 @@ export function StakeDialog({
           <div className="flex items-center justify-between p-3 rounded-md bg-muted/50 mb-4">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">{tierName} Tier</span>
+              <span className="text-sm font-medium">
+                {loading ? "Loading..." : `${tierName} Tier`}
+              </span>
             </div>
             <span className="text-sm text-muted-foreground">
-              Limit: {stakeLimit === Infinity ? "Unlimited" : `$${stakeLimit.toLocaleString()}`}
+              {loading
+                ? "..."
+                : `Limit: ${stakeLimit === Infinity ? "Unlimited" : `$${stakeLimit.toLocaleString()}`}`}
             </span>
           </div>
 
@@ -169,7 +191,7 @@ export function StakeDialog({
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={!amount || parseFloat(amount) <= 0 || isSubmitting || exceedsLimit}
+            disabled={!amount || parseFloat(amount) <= 0 || isSubmitting || exceedsLimit || loading}
             className={cn(
               "w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-10 px-4",
               outcome === "YES"
