@@ -1,0 +1,54 @@
+{
+  "name": "@komon/market-engine",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Komon Market Engine — generic prediction markets on Solana",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/psyto/komon.git",
+    "directory": "sdk"
+  },
+  "author": "Komon Contributors",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.0",
+    "@solana/web3.js": "^1.95.0",
+    "@solana/spl-token": "^0.4.0",
+    "bn.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.5",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@coral-xyz/anchor": "^0.30.0",
+    "@solana/web3.js": "^1.95.0"
+  },
+  "keywords": [
+    "solana",
+    "anchor",
+    "prediction-market",
+    "market-engine",
+    "komon"
+  ]
+}
