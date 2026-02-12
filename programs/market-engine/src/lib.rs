@@ -141,7 +141,8 @@ pub mod market_engine {
                     signer_seeds,
                 );
                 token::mint_to(mint_ctx, tokens_to_mint)?;
-                market.yes_supply = market.yes_supply.checked_add(tokens_to_mint).unwrap();
+                market.yes_supply = market.yes_supply.checked_add(tokens_to_mint)
+                    .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             Outcome::No => {
                 let mint_ctx = CpiContext::new_with_signer(
@@ -154,15 +155,18 @@ pub mod market_engine {
                     signer_seeds,
                 );
                 token::mint_to(mint_ctx, tokens_to_mint)?;
-                market.no_supply = market.no_supply.checked_add(tokens_to_mint).unwrap();
+                market.no_supply = market.no_supply.checked_add(tokens_to_mint)
+                    .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
         }
 
-        market.liquidity = market.liquidity.checked_add(amount).unwrap();
+        market.liquidity = market.liquidity.checked_add(amount)
+            .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         // Update global volume
         let config = &mut ctx.accounts.config;
-        config.total_volume = config.total_volume.checked_add(amount).unwrap();
+        config.total_volume = config.total_volume.checked_add(amount)
+            .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(StakePlaced {
             market_id,
@@ -205,7 +209,8 @@ pub mod market_engine {
                     },
                 );
                 token::burn(burn_ctx, amount)?;
-                market.yes_supply = market.yes_supply.checked_sub(amount).unwrap();
+                market.yes_supply = market.yes_supply.checked_sub(amount)
+                    .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             Outcome::No => {
                 let burn_ctx = CpiContext::new(
@@ -217,7 +222,8 @@ pub mod market_engine {
                     },
                 );
                 token::burn(burn_ctx, amount)?;
-                market.no_supply = market.no_supply.checked_sub(amount).unwrap();
+                market.no_supply = market.no_supply.checked_sub(amount)
+                    .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
         }
 
@@ -243,7 +249,8 @@ pub mod market_engine {
         );
         token::transfer(transfer_ctx, tokens_to_return)?;
 
-        market.liquidity = market.liquidity.checked_sub(tokens_to_return).unwrap();
+        market.liquidity = market.liquidity.checked_sub(tokens_to_return)
+            .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(StakeWithdrawn {
             market_id,
@@ -312,9 +319,9 @@ pub mod market_engine {
         let gross_payout = if total_winning_supply > 0 {
             market.liquidity
                 .checked_mul(winning_balance)
-                .unwrap()
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?
                 .checked_div(total_winning_supply)
-                .unwrap()
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?
         } else {
             0
         };
@@ -324,10 +331,11 @@ pub mod market_engine {
         let (burn_amount, net_payout) = if config.burn_enabled && gross_payout > 0 {
             let burn = gross_payout
                 .checked_mul(config.burn_rate_bps as u64)
-                .unwrap()
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?
                 .checked_div(10000)
-                .unwrap();
-            config.total_burned = config.total_burned.checked_add(burn).unwrap();
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
+            config.total_burned = config.total_burned.checked_add(burn)
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             (burn, gross_payout - burn)
         } else {
             (0, gross_payout)
@@ -755,4 +763,6 @@ pub enum ErrorCode {
     AlreadyClaimed,
     #[msg("Unauthorized")]
     Unauthorized,
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }

@@ -72,22 +72,27 @@ pub mod reputation_core {
         match action {
             ActionType::SubjectCreated => {
                 reputation.subjects_created += 1;
-                reputation.experience = reputation.experience.checked_add(10).unwrap();
+                reputation.experience = reputation.experience.checked_add(10)
+                    .ok_or(error!(ReputationError::ArithmeticOverflow))?;
             }
             ActionType::MarketCreated => {
                 reputation.markets_created += 1;
-                reputation.experience = reputation.experience.checked_add(20).unwrap();
+                reputation.experience = reputation.experience.checked_add(20)
+                    .ok_or(error!(ReputationError::ArithmeticOverflow))?;
             }
             ActionType::StakePlaced => {
                 if let Some(amt) = amount {
-                    reputation.total_staked = reputation.total_staked.checked_add(amt).unwrap();
+                    reputation.total_staked = reputation.total_staked.checked_add(amt)
+                        .ok_or(error!(ReputationError::ArithmeticOverflow))?;
                 }
-                reputation.experience = reputation.experience.checked_add(5).unwrap();
+                reputation.experience = reputation.experience.checked_add(5)
+                    .ok_or(error!(ReputationError::ArithmeticOverflow))?;
             }
             ActionType::PredictionWon => {
                 reputation.predictions_won += 1;
                 if let Some(amt) = amount {
-                    reputation.total_earned = reputation.total_earned.checked_add(amt).unwrap();
+                    reputation.total_earned = reputation.total_earned.checked_add(amt)
+                        .ok_or(error!(ReputationError::ArithmeticOverflow))?;
                 }
                 // Update streak
                 if reputation.current_streak >= 0 {
@@ -98,7 +103,8 @@ pub mod reputation_core {
                 if reputation.current_streak as u16 > reputation.best_streak {
                     reputation.best_streak = reputation.current_streak as u16;
                 }
-                reputation.experience = reputation.experience.checked_add(50).unwrap();
+                reputation.experience = reputation.experience.checked_add(50)
+                    .ok_or(error!(ReputationError::ArithmeticOverflow))?;
             }
             ActionType::PredictionLost => {
                 reputation.predictions_lost += 1;
@@ -107,7 +113,8 @@ pub mod reputation_core {
                 } else {
                     reputation.current_streak = -1;
                 }
-                reputation.experience = reputation.experience.checked_add(10).unwrap();
+                reputation.experience = reputation.experience.checked_add(10)
+                    .ok_or(error!(ReputationError::ArithmeticOverflow))?;
             }
         }
 
@@ -116,9 +123,9 @@ pub mod reputation_core {
         if total > 0 {
             reputation.accuracy_bps = ((reputation.predictions_won as u64)
                 .checked_mul(10000)
-                .unwrap()
+                .ok_or(error!(ReputationError::ArithmeticOverflow))?
                 .checked_div(total as u64)
-                .unwrap()) as u16;
+                .ok_or(error!(ReputationError::ArithmeticOverflow))?) as u16;
         }
 
         update_level(reputation);
@@ -385,4 +392,10 @@ pub struct LevelUp {
     pub user: Pubkey,
     pub old_level: u8,
     pub new_level: u8,
+}
+
+#[error_code]
+pub enum ReputationError {
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }
