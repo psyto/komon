@@ -122,7 +122,7 @@ pub mod direction_market {
                     signer_seeds,
                 );
                 token::mint_to(mint_ctx, tokens_to_mint)?;
-                direction.yes_supply = direction.yes_supply.checked_add(tokens_to_mint).unwrap();
+                direction.yes_supply = direction.yes_supply.checked_add(tokens_to_mint).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             Outcome::No => {
                 let mint_ctx = CpiContext::new_with_signer(
@@ -135,15 +135,15 @@ pub mod direction_market {
                     signer_seeds,
                 );
                 token::mint_to(mint_ctx, tokens_to_mint)?;
-                direction.no_supply = direction.no_supply.checked_add(tokens_to_mint).unwrap();
+                direction.no_supply = direction.no_supply.checked_add(tokens_to_mint).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
         }
 
-        direction.usdc_liquidity = direction.usdc_liquidity.checked_add(amount).unwrap();
+        direction.usdc_liquidity = direction.usdc_liquidity.checked_add(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         // Update global volume
         let config = &mut ctx.accounts.config;
-        config.total_volume = config.total_volume.checked_add(amount).unwrap();
+        config.total_volume = config.total_volume.checked_add(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(StakePlaced {
             direction_id: direction.id,
@@ -197,7 +197,7 @@ pub mod direction_market {
                     },
                 );
                 token::burn(burn_ctx, amount)?;
-                direction.yes_supply = direction.yes_supply.checked_sub(amount).unwrap();
+                direction.yes_supply = direction.yes_supply.checked_sub(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             Outcome::No => {
                 let burn_ctx = CpiContext::new(
@@ -209,7 +209,7 @@ pub mod direction_market {
                     },
                 );
                 token::burn(burn_ctx, amount)?;
-                direction.no_supply = direction.no_supply.checked_sub(amount).unwrap();
+                direction.no_supply = direction.no_supply.checked_sub(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
         }
 
@@ -225,7 +225,7 @@ pub mod direction_market {
         );
         token::transfer(transfer_ctx, usdc_to_return)?;
 
-        direction.usdc_liquidity = direction.usdc_liquidity.checked_sub(usdc_to_return).unwrap();
+        direction.usdc_liquidity = direction.usdc_liquidity.checked_sub(usdc_to_return).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(StakeWithdrawn {
             direction_id: direction.id,
@@ -288,9 +288,9 @@ pub mod direction_market {
         let payout = if total_winning_supply > 0 {
             direction.usdc_liquidity
                 .checked_mul(winning_balance)
-                .unwrap()
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?
                 .checked_div(total_winning_supply)
-                .unwrap()
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?
         } else {
             0
         };
@@ -739,4 +739,6 @@ pub enum ErrorCode {
     AlreadyClaimed,
     #[msg("Unauthorized action")]
     Unauthorized,
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }

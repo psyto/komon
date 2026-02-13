@@ -84,7 +84,7 @@ pub mod problem_registry {
         );
         token::transfer(transfer_ctx, amount)?;
 
-        problem.bounty_amount = problem.bounty_amount.checked_add(amount).unwrap();
+        problem.bounty_amount = problem.bounty_amount.checked_add(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(ProblemFunded {
             problem_id: problem.id,
@@ -398,4 +398,6 @@ pub enum ErrorCode {
     InvalidStatusTransition,
     #[msg("Unauthorized action")]
     Unauthorized,
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }

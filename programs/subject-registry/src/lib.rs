@@ -99,7 +99,7 @@ pub mod subject_registry {
         );
         token::transfer(transfer_ctx, amount)?;
 
-        subject.pool_amount = subject.pool_amount.checked_add(amount).unwrap();
+        subject.pool_amount = subject.pool_amount.checked_add(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(SubjectFunded {
             subject_id: subject.id,
@@ -160,8 +160,7 @@ pub mod subject_registry {
             }
             ProtocolMode::Creator => {
                 // DAO vote resolution - proof required
-                require!(resolution_proof.is_some(), ErrorCode::ResolutionProofRequired);
-                let proof = resolution_proof.unwrap();
+                let proof = resolution_proof.ok_or(error!(ErrorCode::ResolutionProofRequired))?;
                 require!(
                     proof.vote_count >= proof.quorum_required,
                     ErrorCode::QuorumNotReached
@@ -466,4 +465,6 @@ pub enum ErrorCode {
     QuorumNotReached,
     #[msg("Approval threshold not met")]
     ThresholdNotMet,
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }

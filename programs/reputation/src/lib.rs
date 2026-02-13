@@ -58,7 +58,7 @@ pub mod reputation {
 
         reputation.problems_posted += 1;
         reputation.last_active = Clock::get()?.unix_timestamp;
-        reputation.experience = reputation.experience.checked_add(10).unwrap();
+        reputation.experience = reputation.experience.checked_add(10).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
         update_level(reputation);
 
         emit!(ActionRecorded {
@@ -77,7 +77,7 @@ pub mod reputation {
 
         reputation.directions_proposed += 1;
         reputation.last_active = Clock::get()?.unix_timestamp;
-        reputation.experience = reputation.experience.checked_add(20).unwrap();
+        reputation.experience = reputation.experience.checked_add(20).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
         update_level(reputation);
 
         emit!(ActionRecorded {
@@ -94,9 +94,9 @@ pub mod reputation {
     pub fn record_stake(ctx: Context<UpdateReputation>, amount: u64) -> Result<()> {
         let reputation = &mut ctx.accounts.reputation;
 
-        reputation.total_staked = reputation.total_staked.checked_add(amount).unwrap();
+        reputation.total_staked = reputation.total_staked.checked_add(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
         reputation.last_active = Clock::get()?.unix_timestamp;
-        reputation.experience = reputation.experience.checked_add(5).unwrap();
+        reputation.experience = reputation.experience.checked_add(5).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
         update_level(reputation);
 
         emit!(ActionRecorded {
@@ -119,7 +119,7 @@ pub mod reputation {
 
         if won {
             reputation.directions_won += 1;
-            reputation.total_earned = reputation.total_earned.checked_add(earnings).unwrap();
+            reputation.total_earned = reputation.total_earned.checked_add(earnings).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
             // Update streak
             if reputation.current_streak >= 0 {
@@ -134,7 +134,7 @@ pub mod reputation {
             }
 
             // Bonus XP for win
-            reputation.experience = reputation.experience.checked_add(50).unwrap();
+            reputation.experience = reputation.experience.checked_add(50).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
         } else {
             reputation.directions_lost += 1;
 
@@ -146,7 +146,7 @@ pub mod reputation {
             }
 
             // Some XP even for loss (participation)
-            reputation.experience = reputation.experience.checked_add(10).unwrap();
+            reputation.experience = reputation.experience.checked_add(10).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
         }
 
         // Update win rate (basis points)
@@ -154,9 +154,9 @@ pub mod reputation {
         if total_outcomes > 0 {
             reputation.win_rate = ((reputation.directions_won as u64)
                 .checked_mul(10000)
-                .unwrap()
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?
                 .checked_div(total_outcomes as u64)
-                .unwrap()) as u16;
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?) as u16;
         }
 
         reputation.last_active = Clock::get()?.unix_timestamp;
@@ -192,22 +192,22 @@ pub mod reputation {
         match action {
             ActionType::ProblemPosted => {
                 reputation.problems_posted += 1;
-                reputation.experience = reputation.experience.checked_add(10).unwrap();
+                reputation.experience = reputation.experience.checked_add(10).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             ActionType::DirectionProposed => {
                 reputation.directions_proposed += 1;
-                reputation.experience = reputation.experience.checked_add(20).unwrap();
+                reputation.experience = reputation.experience.checked_add(20).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             ActionType::StakePlaced => {
                 if let Some(amt) = amount {
-                    reputation.total_staked = reputation.total_staked.checked_add(amt).unwrap();
+                    reputation.total_staked = reputation.total_staked.checked_add(amt).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
                 }
-                reputation.experience = reputation.experience.checked_add(5).unwrap();
+                reputation.experience = reputation.experience.checked_add(5).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             ActionType::DirectionWon => {
                 reputation.directions_won += 1;
                 if let Some(amt) = amount {
-                    reputation.total_earned = reputation.total_earned.checked_add(amt).unwrap();
+                    reputation.total_earned = reputation.total_earned.checked_add(amt).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
                 }
                 if reputation.current_streak >= 0 {
                     reputation.current_streak += 1;
@@ -217,7 +217,7 @@ pub mod reputation {
                 if reputation.current_streak as u16 > reputation.best_streak {
                     reputation.best_streak = reputation.current_streak as u16;
                 }
-                reputation.experience = reputation.experience.checked_add(50).unwrap();
+                reputation.experience = reputation.experience.checked_add(50).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
             ActionType::DirectionLost => {
                 reputation.directions_lost += 1;
@@ -226,7 +226,7 @@ pub mod reputation {
                 } else {
                     reputation.current_streak = -1;
                 }
-                reputation.experience = reputation.experience.checked_add(10).unwrap();
+                reputation.experience = reputation.experience.checked_add(10).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
             }
         }
 
@@ -235,9 +235,9 @@ pub mod reputation {
         if total_outcomes > 0 {
             reputation.win_rate = ((reputation.directions_won as u64)
                 .checked_mul(10000)
-                .unwrap()
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?
                 .checked_div(total_outcomes as u64)
-                .unwrap()) as u16;
+                .ok_or(error!(ErrorCode::ArithmeticOverflow))?) as u16;
         }
 
         update_level(reputation);
@@ -546,4 +546,14 @@ pub struct LevelUp {
 pub struct SyncedToSovereign {
     pub user: Pubkey,
     pub civic_score: u16,
+}
+
+// ============================================================================
+// Errors
+// ============================================================================
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }

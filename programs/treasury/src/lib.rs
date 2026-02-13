@@ -40,7 +40,7 @@ pub mod treasury {
         token::transfer(transfer_ctx, amount)?;
 
         let treasury = &mut ctx.accounts.treasury;
-        treasury.total_deposits = treasury.total_deposits.checked_add(amount).unwrap();
+        treasury.total_deposits = treasury.total_deposits.checked_add(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(TreasuryDeposit {
             depositor: ctx.accounts.depositor.key(),
@@ -101,10 +101,10 @@ pub mod treasury {
         // Calculate fee
         let fee = amount
             .checked_mul(treasury.fee_rate as u64)
-            .unwrap()
+            .ok_or(error!(ErrorCode::ArithmeticOverflow))?
             .checked_div(10000)
-            .unwrap();
-        let payout_amount = amount.checked_sub(fee).unwrap();
+            .ok_or(error!(ErrorCode::ArithmeticOverflow))?;
+        let payout_amount = amount.checked_sub(fee).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         let seeds = &[b"treasury".as_ref(), &[treasury.bump]];
         let signer_seeds = &[&seeds[..]];
@@ -121,8 +121,8 @@ pub mod treasury {
         );
         token::transfer(transfer_ctx, payout_amount)?;
 
-        treasury.total_payouts = treasury.total_payouts.checked_add(payout_amount).unwrap();
-        treasury.total_fees_collected = treasury.total_fees_collected.checked_add(fee).unwrap();
+        treasury.total_payouts = treasury.total_payouts.checked_add(payout_amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
+        treasury.total_fees_collected = treasury.total_fees_collected.checked_add(fee).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(TreasuryPayout {
             recipient: ctx.accounts.recipient.key(),
@@ -160,7 +160,7 @@ pub mod treasury {
         );
         token::transfer(transfer_ctx, amount)?;
 
-        treasury.total_fees_collected = treasury.total_fees_collected.checked_sub(amount).unwrap();
+        treasury.total_fees_collected = treasury.total_fees_collected.checked_sub(amount).ok_or(error!(ErrorCode::ArithmeticOverflow))?;
 
         emit!(FeesWithdrawn {
             authority: ctx.accounts.authority.key(),
@@ -443,4 +443,6 @@ pub enum ErrorCode {
     InsufficientFees,
     #[msg("Unauthorized action")]
     Unauthorized,
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }
