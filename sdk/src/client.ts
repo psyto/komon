@@ -32,6 +32,7 @@ import {
   findNoMintPda,
   findUserPositionPda,
 } from "./pda";
+import { MARKET_ENGINE_IDL } from "./idl";
 
 type AnyProgram = Program<Idl>;
 
@@ -46,10 +47,9 @@ export class MarketEngineClient {
   ) {
     this.programId = programId;
 
-    // If IDL is provided, use it directly. Otherwise use a minimal stub.
-    // Once the IDL is generated via `anchor build`, pass it here for full
-    // type safety and automatic account resolution.
-    const resolvedIdl = idl ?? MINIMAL_IDL;
+    // If IDL is provided, use it directly. Otherwise use the built-in IDL
+    // constructed from the on-chain program source.
+    const resolvedIdl = idl ?? MARKET_ENGINE_IDL;
     this.program = new Program(resolvedIdl, provider) as AnyProgram;
   }
 
@@ -385,19 +385,3 @@ export class MarketEngineClient {
     };
   }
 }
-
-// ==========================================================================
-// Minimal IDL stub — replace with generated IDL after `anchor build`
-// ==========================================================================
-
-const MINIMAL_IDL: Idl = {
-  address: MARKET_ENGINE_PROGRAM_ID.toString(),
-  metadata: {
-    name: "market_engine",
-    version: "0.1.0",
-    spec: "0.1.0",
-  },
-  instructions: [],
-  accounts: [],
-  types: [],
-} as unknown as Idl;

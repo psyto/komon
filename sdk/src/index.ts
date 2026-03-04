@@ -1,6 +1,9 @@
 // Client
 export { MarketEngineClient } from "./client";
 
+// IDL
+export { MARKET_ENGINE_IDL } from "./idl";
+
 // PDA Utilities
 export {
   MARKET_ENGINE_PROGRAM_ID,
